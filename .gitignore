@@ -1,0 +1,24 @@
+# R
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+
+# renv cache
+renv/library/
+
+# Big or sensible Data 
+data/raw/
+data/**/*.Rdata
+data/**/*.RDS
+data/**/*.csv
+
+# Generate Results
+results/
+!results/README.md
+
+# Temporal Files
+*.tmp
+*.log
+.DS_Store
+
