@@ -1,0 +1,90 @@
+---
+title: "Test_01"
+author: "David Cuesta"
+date: "2025-10-17"
+output: html_document
+---
+
+```{r}
+# =========================
+# compare_interp.R
+# =========================
+library(tidyverse)
+
+# ---- Carga los dos datasets ----
+load("Interpdata_clean.Rdata")  # crea Interpdata
+new <- Interpdata; rm(Interpdata)
+
+load("Interpdata_old.Rdata") # crea Interpdata
+old <- Interpdata; rm(Interpdata)
+
+# ---- Alinea columnas comunes ----
+common_cols <- intersect(names(old), names(new))
+old <- old[, common_cols]
+new <- new[, common_cols]
+
+# ---- Verifica estructura ----
+cat("🧱 Dimensiones:\n")
+print(rbind(old = dim(old), new = dim(new)))
+
+cat("\n📋 Columnas en común:", length(common_cols), "\n\n")
+
+# ---- Combina para comparación ----
+cmp <- inner_join(new %>% mutate(version = "new"),
+                  old %>% mutate(version = "old"),
+                  by = c("uniqueID", "t"),
+                  suffix = c(".new", ".old"))
+
+# ---- Calcular diferencias en variables clave ----
+numeric_cols <- c("planeIntersect_x", "planeIntersect_y", "euc_vel", "ang_vel")
+diff_summary <- map_dfr(numeric_cols, function(v){
+  newv <- cmp[[paste0(v, ".new")]]
+  oldv <- cmp[[paste0(v, ".old")]]
+  tibble(
+    variable = v,
+    mean_abs_diff = mean(abs(newv - oldv), na.rm = TRUE),
+    median_abs_diff = median(abs(newv - oldv), na.rm = TRUE),
+    correlation = cor(newv, oldv, use = "pairwise.complete.obs")
+  )
+})
+
+print(diff_summary)
+
+# ---- Visual quick check ----
+for (v in numeric_cols) {
+  ggplot(cmp, aes(x = .data[[paste0(v, ".old")]], 
+                  y = .data[[paste0(v, ".new")]])) +
+    geom_point(alpha = 0.2, size = 0.6) +
+    geom_abline(slope = 1, intercept = 0, color = "red") +
+    labs(title = paste("Comparison:", v),
+         x = "Old version", y = "New version") +
+    theme_minimal() -> p
+  print(p)
+}
+
+cat("\n✅ Done. Correlations and scatterplots printed above.\n")
+
+```
+
+```{r}
+table(is.na(new$planeIntersect_x))
+
+```
+
+```{r}
+cmp_valid <- cmp %>% filter(is.finite(planeIntersect_x.new), is.finite(planeIntersect_x.old))
+cor(cmp_valid$planeIntersect_x.new, cmp_valid$planeIntersect_x.old)
+```
+
+```{r}
+ggplot(new %>% filter(uniqueID=="8_7")) +
+  geom_line(aes(t, planeIntersect_x), color="black") +
+  geom_line(aes(t, planeIntersect_y), color="red")
+```
+```{r}
+library(pracma)
+DFA_old <- pracma::dfa(old$euc_vel[1:10000])
+DFA_new <- pracma::dfa(new$euc_vel[1:10000])
+
+```
+
