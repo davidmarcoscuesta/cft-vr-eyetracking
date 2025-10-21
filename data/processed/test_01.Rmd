@@ -77,14 +77,104 @@ cor(cmp_valid$planeIntersect_x.new, cmp_valid$planeIntersect_x.old)
 ```
 
 ```{r}
-ggplot(new %>% filter(uniqueID=="8_7")) +
-  geom_line(aes(t, planeIntersect_x), color="black") +
-  geom_line(aes(t, planeIntersect_y), color="red")
+bad_ids <- new %>%
+  dplyr::group_by(uniqueID) %>%
+  dplyr::summarise(
+    min_x = suppressWarnings(min(planeIntersect_x, na.rm = TRUE)),
+    min_y = suppressWarnings(min(planeIntersect_y, na.rm = TRUE))
+  ) %>%
+  dplyr::arrange(min_x) %>%
+  dplyr::slice(1:5) %>%
+  dplyr::pull(uniqueID)
+
+bad_ids
+
+```
+
+
+```{r}
+id <- bad_ids[1]
+ggplot(new %>% dplyr::filter(uniqueID == id),
+       aes(x = t)) +
+  geom_line(aes(y = planeIntersect_x), color = "black", na.rm = TRUE) +
+  geom_line(aes(y = planeIntersect_y), color = "red",   na.rm = TRUE) +
+  labs(title = paste("Trial", id), y = "planeIntersect (m)", x = "t (ms)") +
+  theme_minimal()
+
+```
+
+
+```{r}
+# ¿Existe ese trial en "new"?
+"8_7" %in% unique(new$uniqueID)
+
+# Si existe, dibuja:
+ggplot(new %>% dplyr::filter(uniqueID == "8_2"),
+       aes(x = t)) +
+  geom_line(aes(y = planeIntersect_x), color = "black", na.rm = TRUE) +
+  geom_line(aes(y = planeIntersect_y), color = "red",   na.rm = TRUE) +
+  labs(title = "Trial 8_7", y = "planeIntersect (m)", x = "t (ms)") +
+  theme_minimal()
+
 ```
 ```{r}
-library(pracma)
-DFA_old <- pracma::dfa(old$euc_vel[1:10000])
-DFA_new <- pracma::dfa(new$euc_vel[1:10000])
+library(dplyr)
+library(ggplot2)
+library(DFA)
+
+# --- Helper: calcula alpha DFA sobre una serie (regresión log-log) ---
+dfa_alpha <- function(x) {
+  x <- as.numeric(x)
+  x <- x[is.finite(x)]
+  if (length(x) < 200) return(NA_real_)  # mínima longitud sensata
+  # Serie integrada (detrending interno lo hace DFA::DFA con m=1)
+  res <- try(DFA(x, scale = 2^(1/8), box_size = 4, m = 1), silent = TRUE)
+  if (inherits(res, "try-error")) return(NA_real_)
+  df <- as.data.frame(res)
+  fit <- lm(log(DFA) ~ log(box), data = df)
+  as.numeric(coef(fit)[2])
+}
+
+# --- Emparejar trials presentes en ambas versiones ---
+ids <- intersect(unique(old$uniqueID), unique(new$uniqueID))
+
+# Ventana: ±5 s alrededor de la transición entre objetos (t_targ1StartTime==0)
+# Ajusta si quieres otra ventana.
+WIN_MS <- 5000
+
+rows <- lapply(ids, function(id) {
+  o <- old %>% filter(uniqueID == id,
+                      between(t_targ1StartTime, -WIN_MS, WIN_MS))
+  n <- new %>% filter(uniqueID == id,
+                      between(t_targ1StartTime, -WIN_MS, WIN_MS))
+
+  # Aseguramos longitud mínima
+  if (nrow(o) < 200 || nrow(n) < 200) return(NULL)
+
+  # Elige la señal: euc_vel o ang_vel
+  alpha_old <- dfa_alpha(o$euc_vel)
+  alpha_new <- dfa_alpha(n$euc_vel)
+
+  data.frame(uniqueID = id, alpha_old = alpha_old, alpha_new = alpha_new)
+})
+
+cmp <- bind_rows(rows) %>% filter(is.finite(alpha_old), is.finite(alpha_new))
+
+# --- Resumen y test pareado ---
+summary(cmp)
+mean_diff <- mean(cmp$alpha_new - cmp$alpha_old, na.rm = TRUE)
+cat(sprintf("Δα (new - old): %.3f\n", mean_diff))
+print(t.test(cmp$alpha_new, cmp$alpha_old, paired = TRUE))
+
+# --- Gráfico de dispersión (línea identidad) ---
+ggplot(cmp, aes(x = alpha_old, y = alpha_new)) +
+  geom_abline(slope = 1, intercept = 0, color = "red", linewidth = 0.7) +
+  geom_point(alpha = 0.6) +
+  coord_equal() +
+  labs(title = "DFA α: new vs old (±5 s alrededor de la transición)",
+       x = "α (old)", y = "α (new)") +
+  theme_minimal()
+
 
 ```
 
