@@ -68,7 +68,6 @@ cat("\n✅ Done. Correlations and scatterplots printed above.\n")
 
 ```{r}
 table(is.na(new$planeIntersect_x))
-
 ```
 
 ```{r}
@@ -88,7 +87,6 @@ bad_ids <- new %>%
   dplyr::pull(uniqueID)
 
 bad_ids
-
 ```
 
 
@@ -100,7 +98,6 @@ ggplot(new %>% dplyr::filter(uniqueID == id),
   geom_line(aes(y = planeIntersect_y), color = "red",   na.rm = TRUE) +
   labs(title = paste("Trial", id), y = "planeIntersect (m)", x = "t (ms)") +
   theme_minimal()
-
 ```
 
 
