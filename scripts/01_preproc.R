@@ -1,6 +1,6 @@
 # =========================
 # 01_preproc.R  (CFT project)
-# Author: David Marcos Cuesta (based on Ben Falandays) + hardening
+# Author: David Cuesta (based on Ben Falandays) + hardening
 # Purpose: Load and clean Trial / ET data, detect and time-lock beeps,
 #          apply exclusions, project gaze to shelf plane, resample to 120 Hz,
 #          compute velocities, and write processed outputs.
@@ -97,6 +97,7 @@ if (file.exists(file.path(DATA_RAW, "rawETdata.Rdata"))) {
 }
 
 ## Parse SysTime, recompute t and dt
+## Parse SysTime, recompute t_ms y dt_ms (ambos en milisegundos)
 ETdata <- ETdata %>%
   dplyr::mutate(
     ymd = clock::date_parse(stringr::str_extract(SysTime, "^[0-9]{1,2}/[0-9]{1,2}/[0-9]{2}"), format = "%m/%d/%y"),
@@ -105,8 +106,11 @@ ETdata <- ETdata %>%
                                                          subsecond_precision = "millisecond"))
   ) %>%
   dplyr::group_by(uniqueID) %>%
-  dplyr::mutate(t = as.numeric(SysTime - SysTime[1]),
-                dt = c(0, diff(t))) %>%
+  dplyr::mutate(
+    # t_ms: milisegundos desde el inicio del trial
+    t_ms  = as.numeric((SysTime - SysTime[1]) / clock::duration_milliseconds(1)),
+    dt_ms = c(0, diff(t_ms))
+  ) %>%
   dplyr::ungroup() %>%
   dplyr::select(-matches("SysTime_(h|m|s|ms)$"), -ymd, -time_stamp) %>%
   dplyr::select(order(colnames(.)))
