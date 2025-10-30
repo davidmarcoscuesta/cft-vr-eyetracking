@@ -107,8 +107,8 @@ ETdata <- ETdata %>%
   ) %>%
   dplyr::group_by(uniqueID) %>%
   dplyr::mutate(
-    # t_ms: milisegundos desde el inicio del trial
-    t_ms  = as.numeric((SysTime - SysTime[1]) / clock::duration_milliseconds(1)),
+    # milisegundos desde el inicio del trial (sin divisiones entre durations)
+    t_ms  = as.numeric(clock::duration_cast(SysTime - dplyr::first(SysTime), "milliseconds")),
     dt_ms = c(0, diff(t_ms))
   ) %>%
   dplyr::ungroup() %>%
@@ -121,7 +121,7 @@ if (length(rm_row) == 1 && rm_row > 0) {
   ETdata <- ETdata[-rm_row,] %>%
     dplyr::group_by(uniqueID) %>%
     dplyr::mutate(
-      t_ms  = as.numeric((SysTime - SysTime[1]) / clock::duration_milliseconds(1)),
+      t_ms  = as.numeric(clock::duration_cast(SysTime - dplyr::first(SysTime), "milliseconds")),
       dt_ms = c(0, diff(t_ms))
     ) %>%
     dplyr::ungroup()
@@ -159,16 +159,16 @@ beeps <- ETdata %>%
     beepDetect = as.integer(beepStatus == 2 & dplyr::lag(beepStatus, default = 0) == 1)
   ) %>%
   dplyr::summarise(
-    beepStartTime  = ifelse(any(beepStart==1),  t[which(beepStart==1)[1]],  NA_real_),
-    beepDetectTime = ifelse(any(beepDetect==1), t[which(beepDetect==1)[1]], NA_real_)
+    beepStartTime  = ifelse(any(beepStart==1),  t_ms[which(beepStart==1)[1]],  NA_real_),
+    beepDetectTime = ifelse(any(beepDetect==1), t_ms[which(beepDetect==1)[1]], NA_real_)
   )
 
 ETdata <- ETdata %>%
   dplyr::left_join(beeps, by = "uniqueID") %>%
   dplyr::mutate(
-    beepDetectionTrial = as.integer(!is.na(beepDetectTime)),
-    t_beepStartTime     = t - beepStartTime,
-    t_beepDetectionTime = t - beepDetectTime
+    beepDetectionTrial  = as.integer(!is.na(beepDetectTime)),
+    t_beepStartTime     = t_ms - beepStartTime,
+    t_beepDetectionTime = t_ms - beepDetectTime
   ) %>%
   dplyr::select(order(colnames(.)))
 
@@ -358,34 +358,30 @@ vel_raw <- ETdata %>%
   dplyr::filter(invalidWindow==0) %>%
   dplyr::group_by(uniqueID) %>%
   dplyr::mutate(
-    dt_ms  = c(0, diff(t)),
-    xdiff  = c(0, diff(planeIntersect_x)),
-    ydiff  = c(0, diff(planeIntersect_y)),
-    eucDist= sqrt(xdiff^2 + ydiff^2),
-    euc_vel= eucDist / (dt_ms/1000),           # meters/second
-    theta2D= rad2deg(atan2(ydiff, xdiff)),
-    ang_vel= theta2D / (dt_ms/1000)            # degrees/second
+    xdiff   = c(0, diff(planeIntersect_x)),
+    ydiff   = c(0, diff(planeIntersect_y)),
+    eucDist = sqrt(xdiff^2 + ydiff^2),
+    euc_vel = eucDist / (dt_ms/1000),           # m/s (dt_ms → s)
+    theta2D = rad2deg(atan2(ydiff, xdiff)),
+    ang_vel = theta2D / (dt_ms/1000)            # deg/s
   ) %>%
   dplyr::ungroup() %>%
-  dplyr::select(uniqueID, t, dt_ms, euc_vel, ang_vel)
+  dplyr::select(uniqueID, t_ms, dt_ms, euc_vel, ang_vel)
 
 ETdata_clean <- ETdata %>%
-  dplyr::select(-dt) %>%
-  dplyr::left_join(vel_raw, by = c("uniqueID","t")) %>%
-  dplyr::mutate(t_targ1StartTime = t - targ1StartTime) %>%
+  dplyr::left_join(vel_raw, by = c("uniqueID","t_ms")) %>%
+  dplyr::mutate(t_targ1StartTime = t_ms - targ1StartTime) %>%
   dplyr::select(order(colnames(.)))
 
 ## =========================
 ## 7) Interpolation to a regular 120 Hz grid
 ## =========================
 interp_one <- function(df){
-  xi <- seq(0, max(df$t, na.rm=TRUE), by = DT_MS)
-  px <- pracma::interp1(df$t, df$planeIntersect_x, xi, method = "linear")
-  py <- pracma::interp1(df$t, df$planeIntersect_y, xi, method = "linear")
-  out <- tibble::tibble(t = xi, planeIntersect_x = px, planeIntersect_y = py)
-  out$subjectNr <- df$subjectNr[1]
-  out$trialNr   <- df$trialNr[1]
-  out$uniqueID  <- df$uniqueID[1]
+  xi <- seq(0, max(df$t_ms, na.rm=TRUE), by = DT_MS)
+  px <- pracma::interp1(df$t_ms, df$planeIntersect_x, xi, method = "linear")
+  py <- pracma::interp1(df$t_ms, df$planeIntersect_y, xi, method = "linear")
+  out <- tibble::tibble(t_ms = xi, planeIntersect_x = px, planeIntersect_y = py)
+  out$subjectNr <- df$subjectNr[1]; out$trialNr <- df$trialNr[1]; out$uniqueID <- df$uniqueID[1]
   out
 }
 
@@ -393,7 +389,7 @@ Interpdata <- ETdata_clean %>%
   dplyr::distinct(uniqueID, subjectNr, trialNr) %>%
   dplyr::pull(uniqueID) %>%
   purrr::map_dfr(\(id){
-    cur <- ETdata_clean %>% dplyr::filter(uniqueID==id)
+    cur <- ETdata_clean %>% dplyr::filter(uniqueID==id, invalidWindow==0)
     suppressWarnings(interp_one(cur))
   })
 
@@ -420,18 +416,16 @@ Interpdata <- Interpdata %>%
   dplyr::left_join(meta_tbl, by = "uniqueID") %>%
   dplyr::group_by(uniqueID) %>%
   dplyr::mutate(
-    t_targ1StartTime     = t - targ1StartTime,
-    t_beepStartTime      = t - beepStartTime,
-    t_beepDetectionTime  = t - beepDetectTime,
-    dt = DT_MS
-  ) %>%
-  dplyr::mutate(
+    t_targ1StartTime     = t_ms - targ1StartTime,
+    t_beepStartTime      = t_ms - beepStartTime,
+    t_beepDetectionTime  = t_ms - beepDetectTime,
+    dt_ms = DT_MS,
     xdiff  = c(0, diff(planeIntersect_x)),
     ydiff  = c(0, diff(planeIntersect_y)),
     eucDist= sqrt(xdiff^2 + ydiff^2),
-    euc_vel= eucDist / (dt/1000),        # m/s
+    euc_vel= eucDist / (dt_ms/1000),      # m/s
     theta2D= rad2deg(atan2(ydiff, xdiff)),
-    ang_vel= theta2D / (dt/1000)         # deg/s
+    ang_vel= theta2D / (dt_ms/1000)       # deg/s
   ) %>%
   dplyr::select(-xdiff, -ydiff, -eucDist, -theta2D) %>%
   dplyr::ungroup() %>%
