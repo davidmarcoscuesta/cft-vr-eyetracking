@@ -83,14 +83,14 @@ ETdata <- ETdata %>% filter(!(uniqueID == "8_7" & t >= 33663)) %>%
   mutate(t = as.numeric(SysTime - SysTime[1]), dt = c(0, diff(t))) %>% 
   ungroup()
 
-# Merge con Trialdata + anclajes relativos (igual)
+# Merge Trialdata + relative anchorages
 ETdata <- left_join(ETdata, Trialdata) %>% select(order(colnames(.)))
 ETdata <- ETdata %>% group_by(uniqueID) %>% 
   mutate(targ1StartTime = as.numeric(targ1StartTime - SysTime[1]), 
          trialFinishTime = as.numeric(trialFinishTime - SysTime[1])) %>% 
   ungroup() %>% select(order(colnames(.)))
 
-# Beeps (igual)
+# Beeps
 tmp <- ETdata %>% 
   group_by(uniqueID) %>% 
   mutate(beepDetection = ifelse((beepStatus == 2 ) & (lag(beepStatus) == 1), 1, 0)) %>% 
@@ -101,7 +101,7 @@ ETdata <- left_join(ETdata, tmp) %>% replace_na(list(beepDetectionTrial = 0, bee
   select(order(colnames(.)))
 
 # =========================
-# Clickdata (igual; solo cambia path)
+# Clickdata 
 # =========================
 for (s in subs) {
   fname <- raw_path(paste0("Clickdata_", s, ".txt"))
@@ -124,9 +124,9 @@ Clickdata <- left_join(Clickdata,
   select(order(colnames(.)))
 
 # =========================
-# Plane projection (como en Ben: carga el preprocesado)
+# Plane projection 
 # =========================
-load(raw_path("preProcessedETdata.Rdata"))  # añade planeIntersect_*
+load(raw_path("preProcessedETdata.Rdata"))  
 
 # =========================
 # Exclusiones (igual que Ben)
