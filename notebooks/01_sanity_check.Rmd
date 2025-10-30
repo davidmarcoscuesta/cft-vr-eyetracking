@@ -1,0 +1,119 @@
+---
+title: "Sanity Check — CFT VR Eye-tracking"
+author: "David Marcos Cuesta"
+date: "`r format(Sys.time(), '%Y-%m-%d %H:%M')`"
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    number_sections: true
+    theme: readable
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, fig.width = 7, fig.height = 4)
+suppressPackageStartupMessages({
+  library(tidyverse)
+  library(readr)
+  library(glue)
+  library(scales)
+  library(knitr)
+  library(kableExtra)
+})
+set.seed(13)
+
+DATA_PROCESSED <- "data/processed"
+RESULTS_DIR    <- "results"
+dir.create(RESULTS_DIR, showWarnings = FALSE, recursive = TRUE)
+
+FREQ_HZ  <- 120
+DT_MS    <- 1000 / FREQ_HZ   # 8.333...
+SHELF_BOUND <- 1.5
+PAD_BLINK_N <- 30
+```
+
+
+```{r}
+# Carga robusta de RData (objetos ETdata_clean e Interpdata) o CSV
+et_rdata <- file.path(DATA_PROCESSED, "ETdata_clean.Rdata")
+ip_rdata <- file.path(DATA_PROCESSED, "Interpdata_clean.Rdata")
+et_csv   <- file.path(DATA_PROCESSED, "ETdata_clean.csv")
+ip_csv   <- file.path(DATA_PROCESSED, "Interpdata_clean.csv")
+
+if (file.exists(et_rdata)) {
+  load(et_rdata) # ETdata_clean
+}
+if (!exists("ETdata_clean") && file.exists(et_csv)) {
+  ETdata_clean <- readr::read_csv(et_csv, show_col_types = FALSE)
+}
+stopifnot("ETdata_clean no encontrado" = exists("ETdata_clean"))
+
+if (file.exists(ip_rdata)) {
+  load(ip_rdata) # Interpdata
+}
+if (!exists("Interpdata") && file.exists(ip_csv)) {
+  Interpdata <- readr::read_csv(ip_csv, show_col_types = FALSE)
+}
+stopifnot("Interpdata no encontrado" = exists("Interpdata"))
+
+sessionInfo()
+```
+```{r}
+et_dim <- dim(ETdata_clean)
+ip_dim <- dim(Interpdata)
+
+cols_et_req <- c("uniqueID","subjectNr","trialNr","SysTime","t_ms","dt_ms",
+                 "planeIntersect_x","planeIntersect_y","invalidData","invalidWindow")
+cols_ip_req <- c("uniqueID","subjectNr","trialNr","t_ms","dt_ms",
+                 "planeIntersect_x","planeIntersect_y")
+
+chk1 <- all(cols_et_req %in% names(ETdata_clean))
+chk2 <- all(cols_ip_req %in% names(Interpdata))
+
+tibble(
+  dataset = c("ETdata_clean","Interpdata"),
+  n_rows  = c(et_dim[1], ip_dim[1]),
+  n_cols  = c(et_dim[2], ip_dim[2]),
+  required_columns_present = c(chk1, chk2)
+) |>
+  kable() |>
+  kable_styling(full_width = FALSE)
+```
+
+```{r}
+# Monotonía de t_ms por trial
+mono_tbl <- ETdata_clean |>
+  group_by(uniqueID) |>
+  summarize(
+    n = n(),
+    is_monotone = all(diff(t_ms) >= 0),
+    min_dt      = suppressWarnings(min(diff(t_ms))),
+    q50_dt      = suppressWarnings(quantile(diff(t_ms), 0.50, na.rm = TRUE)),
+    q95_dt      = suppressWarnings(quantile(diff(t_ms), 0.95, na.rm = TRUE)),
+    max_dt      = suppressWarnings(max(diff(t_ms)))
+  )
+
+pct_nonmono <- mean(!mono_tbl$is_monotone) * 100
+glitch_top  <- mono_tbl |>
+  arrange(desc(max_dt)) |>
+  slice_head(n = 10)
+
+glue("Trials con t_ms no monótono: {round(pct_nonmono,2)}%")
+glitch_top |>
+  kable(caption = "Top 10 trials con mayor max_dt") |>
+  kable_styling(full_width = FALSE)
+```
+
+```{r}
+ETdata_clean |>
+  filter(dt_ms >= 0, dt_ms <= quantile(dt_ms, 0.999, na.rm = TRUE)) |>
+  ggplot(aes(dt_ms)) +
+  geom_histogram(bins = 60) +
+  geom_vline(xintercept = DT_MS, linetype = 2) +
+  labs(title = "Distribución de dt_ms (cortado al 99.9%)",
+       x = "dt_ms", y = "count",
+       subtitle = glue("Línea discontinua: DT_MS esperado = {round(DT_MS,3)}"))
+```
+
