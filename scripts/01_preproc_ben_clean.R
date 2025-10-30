@@ -1,6 +1,5 @@
 # =========================
-# CFT_preprocessing (Ben) – rutas adaptadas a data/raw & data/processed
-# Funcionalidad intacta (mismos nombres y lógica que el Rmd de Ben)
+# CFT_preprocessing 
 # =========================
 
 suppressPackageStartupMessages({
