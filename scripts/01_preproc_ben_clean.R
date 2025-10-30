@@ -22,7 +22,7 @@ subs <- seq(1,31)
 exclude_subs <- c()
 subs <- subset(subs, !subs %in% exclude_subs)
 
-## Trialdata (idéntico a Ben, cambiando solo la ruta)
+## Trialdata
 for (s in subs) {
   fname <- raw_path(paste0("Trialdata_", s, ".txt"))
   cur <- read.table(fname, sep = ",", header = TRUE)
@@ -34,7 +34,7 @@ Trialdata <- Trialdata %>%
   mutate(uniqueID = paste0(subjectNr, "_", trialNr)) %>% 
   select(-practiceNr)
 
-## Parsing systime (igual que Ben)
+## Parsing systime 
 Trialdata <- Trialdata %>% 
   mutate(ymd = date_parse(str_extract(trialStartTime, "^[0-9]{1,2}/[0-9]{1,2}/[0-9]{2}"), format="%m/%d/%y"),
          trialStartTime = as_naive_time(year_month_day(get_year(ymd),get_month(ymd),get_day(ymd),
@@ -54,7 +54,7 @@ Trialdata <- Trialdata %>%
   select(order(colnames(.)))
 
 # =========================
-# Exclusión por score total (igual que Ben)
+# Sscore total exclusion 
 # =========================
 tmp <- Trialdata %>% group_by(subjectNr) %>% summarize(totalScore = sum(score))
 maxScore <- 10*24
@@ -67,12 +67,13 @@ subs <- Trialdata %>% filter(!(subjectNr %in% exclude_subs)) %>% group_by(subjec
 # =========================
 # ETdata
 # =========================
-# El Rmd de Ben tenía el bucle de importación comentado y luego:
-#   save(ETdata,"rawETdata.Rdata")  (opcional)  y después:
-#   load("rawETdata.Rdata")
-load(raw_path("rawETdata.Rdata"))  # crea ETdata
 
-# Glitches de tiempo (igual que Ben)
+# 
+#   save(ETdata,"rawETdata.Rdata")
+#   load("rawETdata.Rdata")
+load(raw_path("rawETdata.Rdata")) 
+
+# Temporal glitches 
 tmp <- ETdata %>% group_by(uniqueID) %>% summarise(maxDT = max(dt))
 summary(ETdata$dt); which.max(ETdata$dt)
 rm_row <- which(ETdata$dt==max(ETdata$dt)) - 1
