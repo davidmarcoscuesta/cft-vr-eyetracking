@@ -139,21 +139,21 @@ if (is.finite(rm_row) && rm_row > 0) {
 ETdata <- ETdata %>% dplyr::filter(!(uniqueID == "8_7" & t_ms >= 33663))
 
 ## Merge Trialdata
-ETdata <- dplyr::left_join(ETdata, Trialdata, by = c("subjectNr","trialNr","uniqueID")) %>%
-  dplyr::group_by(uniqueID) %>%
-  dplyr::mutate(
-    targ1StartTime_ms  = as.numeric(clock::duration_cast(targ1StartTime  - dplyr::first(SysTime), "millisecond")),
-    trialFinishTime_ms = as.numeric(clock::duration_cast(trialFinishTime - dplyr::first(SysTime), "millisecond"))
-  ) %>%
-  dplyr::ungroup() %>%
+ETdata <- dplyr::left_join(
+  ETdata, Trialdata,
+  by = c("subjectNr","trialNr","uniqueID")
+) %>%
   dplyr::select(order(colnames(.)))
 
 ## Make trial-relative anchors (ms from trial start)
 ETdata <- ETdata %>%
   dplyr::group_by(uniqueID) %>%
+  dplyr::arrange(SysTime, .by_group = TRUE) %>%
   dplyr::mutate(
-    targ1StartTime_ms   = as.numeric(clock::duration_cast(targ1StartTime  - dplyr::first(SysTime), "millisecond")),
-    trialFinishTime_ms  = as.numeric(clock::duration_cast(trialFinishTime - dplyr::first(SysTime), "millisecond"))
+    targ1StartTime_ms  = as.numeric(clock::duration_cast(
+      targ1StartTime  - dplyr::first(SysTime), "millisecond")),
+    trialFinishTime_ms = as.numeric(clock::duration_cast(
+      trialFinishTime - dplyr::first(SysTime), "millisecond"))
   ) %>%
   dplyr::ungroup() %>%
   dplyr::select(order(colnames(.)))
@@ -363,8 +363,11 @@ ETdata <- ETdata %>% dplyr::filter(!(uniqueID %in% low_score_trials))
 ## =========================
 ## 6) Velocities (raw, non-uniform time)
 ## =========================
+## =========================
+## 6) Velocities (raw, non-uniform time)
+## =========================
 vel_raw <- ETdata %>%
-  dplyr::filter(invalidWindow==0) %>%
+  dplyr::filter(invalidWindow == 0) %>%
   dplyr::group_by(uniqueID) %>%
   dplyr::mutate(
     xdiff   = c(0, diff(planeIntersect_x)),
@@ -375,7 +378,8 @@ vel_raw <- ETdata %>%
     ang_vel = theta2D / (dt_ms/1000)
   ) %>%
   dplyr::ungroup() %>%
-  dplyr::select(uniqueID, t_ms, dt_ms, euc_vel, ang_vel)
+  # IMPORTANTE: no incluimos dt_ms aquí para evitar colisión en el join
+  dplyr::select(uniqueID, t_ms, euc_vel, ang_vel)
 
 ETdata_clean <- ETdata %>%
   dplyr::left_join(vel_raw, by = c("uniqueID","t_ms")) %>%
@@ -437,6 +441,20 @@ Interpdata <- Interpdata %>%
   dplyr::select(-xdiff, -ydiff, -eucDist, -theta2D) %>%
   dplyr::ungroup() %>%
   dplyr::select(order(colnames(.)))
+
+# Sanity: dt_ms presente y consistente
+stopifnot(all(c("t_ms","dt_ms") %in% names(ETdata_clean)))
+stopifnot(all(c("t_ms","dt_ms") %in% names(Interpdata)))
+
+# ETdata_clean: dt_ms debe ser variable (no todo igual)
+if (!isTRUE(sd(ETdata_clean$dt_ms, na.rm = TRUE) > 0)) {
+  stop("ETdata_clean$dt_ms parece constante; revisa el cálculo de t_ms/dt_ms.")
+}
+
+# Interpdata: dt_ms constante = DT_MS
+if (!all(abs(Interpdata$dt_ms - DT_MS) < 1e-6, na.rm = TRUE)) {
+  stop("Interpdata$dt_ms no es constante o no coincide con DT_MS.")
+}
 
 ## =========================
 ## 8) Save outputs + a tiny exclusion log

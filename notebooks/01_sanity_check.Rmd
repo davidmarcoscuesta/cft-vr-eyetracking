@@ -6,10 +6,11 @@ output:
   html_document:
     toc: true
     toc_depth: 3
-    toc_float: true
     number_sections: true
-    theme: readable
-    code_folding: hide
+  pdf_document:
+    toc: true
+params:
+  data_dir: "data/processed"   
 ---
 
 ```{r setup, include=FALSE}
@@ -20,11 +21,16 @@ suppressPackageStartupMessages({
   library(glue)
   library(scales)
   library(knitr)
+  if (!requireNamespace("kableExtra", quietly = TRUE)) install.packages("kableExtra")
   library(kableExtra)
+  if (!requireNamespace("here", quietly = TRUE)) install.packages("here")
+  library(here)
 })
 set.seed(13)
 
-DATA_PROCESSED <- "data/processed"
+# Asegura que las rutas sean desde la raíz del proyecto
+knitr::opts_knit$set(root.dir = here::here())
+DATA_PROCESSED <- here::here(params$data_dir)
 RESULTS_DIR    <- "results"
 dir.create(RESULTS_DIR, showWarnings = FALSE, recursive = TRUE)
 
@@ -34,32 +40,37 @@ SHELF_BOUND <- 1.5
 PAD_BLINK_N <- 30
 ```
 
-
-```{r}
-# Carga robusta de RData (objetos ETdata_clean e Interpdata) o CSV
+# 0 Loading data and Environment 
+```{r load-data}
+# Intenta cargar los RData; si no existen, usa los CSV
 et_rdata <- file.path(DATA_PROCESSED, "ETdata_clean.Rdata")
 ip_rdata <- file.path(DATA_PROCESSED, "Interpdata_clean.Rdata")
 et_csv   <- file.path(DATA_PROCESSED, "ETdata_clean.csv")
 ip_csv   <- file.path(DATA_PROCESSED, "Interpdata_clean.csv")
 
+# Carga ETdata_clean
 if (file.exists(et_rdata)) {
-  load(et_rdata) # ETdata_clean
-}
-if (!exists("ETdata_clean") && file.exists(et_csv)) {
+  load(et_rdata)  # debe crear ETdata_clean
+} else if (file.exists(et_csv)) {
   ETdata_clean <- readr::read_csv(et_csv, show_col_types = FALSE)
 }
-stopifnot("ETdata_clean no encontrado" = exists("ETdata_clean"))
 
+# Carga Interpdata
 if (file.exists(ip_rdata)) {
-  load(ip_rdata) # Interpdata
-}
-if (!exists("Interpdata") && file.exists(ip_csv)) {
+  load(ip_rdata)  # debe crear Interpdata
+} else if (file.exists(ip_csv)) {
   Interpdata <- readr::read_csv(ip_csv, show_col_types = FALSE)
 }
-stopifnot("Interpdata no encontrado" = exists("Interpdata"))
 
-sessionInfo()
+stopifnot("ETdata_clean no encontrado" = exists("ETdata_clean"))
+stopifnot("Interpdata no encontrado"   = exists("Interpdata"))
+
+# Si uniqueID llega como <chr> o <int> en distinto formato, normaliza:
+ETdata_clean <- ETdata_clean %>% mutate(uniqueID = as.character(uniqueID))
+Interpdata   <- Interpdata   %>% mutate(uniqueID = as.character(uniqueID))
 ```
+
+# 1 Existencia, dimensiones y columnas clave
 ```{r}
 et_dim <- dim(ETdata_clean)
 ip_dim <- dim(Interpdata)
@@ -81,7 +92,7 @@ tibble(
   kable() |>
   kable_styling(full_width = FALSE)
 ```
-
+# 2 Estructura temporal (monotonía y dt)
 ```{r}
 # Monotonía de t_ms por trial
 mono_tbl <- ETdata_clean |>
@@ -116,4 +127,219 @@ ETdata_clean |>
        x = "dt_ms", y = "count",
        subtitle = glue("Línea discontinua: DT_MS esperado = {round(DT_MS,3)}"))
 ```
+# 3 Anclas y beeps
+```{r}
+# Chequeos básicos de coherencia temporal de anclas
+anchors_ok <- ETdata_clean |>
+  group_by(uniqueID) |>
+  summarize(
+    min_t        = min(t_ms, na.rm = TRUE),
+    max_t        = max(t_ms, na.rm = TRUE),
+    t1           = suppressWarnings(first(targ1StartTime_ms)),
+    tf           = suppressWarnings(first(trialFinishTime_ms)),
+    bStart       = suppressWarnings(first(beepStartTime_ms)),
+    bDetect      = suppressWarnings(first(beepDetectTime_ms)),
+    n_beepdetect = suppressWarnings(first(beepDetectionTrial))
+  ) |>
+  mutate(
+    t1_in_range      = is.na(t1)      | (t1 >= min_t & t1 <= max_t),
+    tf_in_range      = is.na(tf)      | (tf >= min_t & tf <= max_t),
+    bStart_in_range  = is.na(bStart)  | (bStart >= min_t & bStart <= max_t),
+    bDetect_in_range = is.na(bDetect) | (bDetect >= min_t & bDetect <= max_t),
+    detect_consistent = ifelse(is.na(bDetect), n_beepdetect == 0, n_beepdetect == 1)
+  )
 
+summ_anchors <- anchors_ok |>
+  summarize(
+    pct_t1_in_range      = mean(t1_in_range) * 100,
+    pct_tf_in_range      = mean(tf_in_range) * 100,
+    pct_bStart_in_range  = mean(bStart_in_range) * 100,
+    pct_bDetect_in_range = mean(bDetect_in_range) * 100,
+    pct_detect_consistent= mean(detect_consistent) * 100
+  )
+
+summ_anchors |>
+  mutate(across(everything(), ~ round(.x, 2))) |>
+  kable(caption = "Coherencia de anclas y beeps (porcentaje OK)") |>
+  kable_styling(full_width = FALSE)
+```
+
+# 4. Proyección al plano: rangos y NA
+```{r}
+proj_stats <- ETdata_clean |>
+  summarize(
+    px_min = min(planeIntersect_x, na.rm = TRUE),
+    px_max = max(planeIntersect_x, na.rm = TRUE),
+    py_min = min(planeIntersect_y, na.rm = TRUE),
+    py_max = max(planeIntersect_y, na.rm = TRUE),
+    pct_NA_px = mean(is.na(planeIntersect_x)) * 100,
+    pct_NA_py = mean(is.na(planeIntersect_y)) * 100,
+    pct_out_of_bounds = mean(
+      planeIntersect_x < -SHELF_BOUND | planeIntersect_x > SHELF_BOUND |
+      planeIntersect_y < -SHELF_BOUND | planeIntersect_y > SHELF_BOUND,
+      na.rm = TRUE
+    ) * 100
+  )
+
+proj_stats |>
+  mutate(across(where(is.numeric), ~ round(.x, 3))) |>
+  kable(caption = "Rangos de proyección y %NA / out-of-bounds") |>
+  kable_styling(full_width = FALSE)
+```
+
+# 5. Invalid y invalidWindow (parpadeos + padding)
+```{r}
+inv_stats <- ETdata_clean |>
+  summarize(
+    pct_invalidData   = mean(invalidData == 1, na.rm = TRUE) * 100,
+    pct_invalidWindow = mean(invalidWindow == 1, na.rm = TRUE) * 100
+  )
+
+inv_by_trial <- ETdata_clean |>
+  group_by(uniqueID) |>
+  summarize(prop_invalid = mean(invalidWindow == 1, na.rm = TRUE)) |>
+  arrange(desc(prop_invalid)) |>
+  mutate(rank = row_number())
+
+inv_stats |>
+  mutate(across(everything(), ~ round(.x, 2))) |>
+  kable(caption = "Porcentaje global de muestras inválidas") |>
+  kable_styling(full_width = FALSE)
+
+inv_by_trial |>
+  slice_head(n = 12) |>
+  kable(caption = "Top 12 trials por proporción de invalidWindow") |>
+  kable_styling(full_width = FALSE)
+```
+
+# 6. Velocidades: distribución y outliers
+```{r}
+vel_stats <- ETdata_clean |>
+  summarize(
+    n_euc   = sum(!is.na(euc_vel)),
+    q_euc   = list(quantile(euc_vel, probs = c(.5,.9,.99,.999), na.rm = TRUE)),
+    n_ang   = sum(!is.na(ang_vel)),
+    q_ang   = list(quantile(ang_vel, probs = c(.5,.9,.99,.999), na.rm = TRUE))
+  )
+
+vel_stats_tbl <- tibble(
+  metric = c("euc_vel (m/s)","ang_vel (deg/s)"),
+  q50 = c(vel_stats$q_euc[[1]][1], vel_stats$q_ang[[1]][1]),
+  q90 = c(vel_stats$q_euc[[1]][2], vel_stats$q_ang[[1]][2]),
+  q99 = c(vel_stats$q_euc[[1]][3], vel_stats$q_ang[[1]][3]),
+  q999= c(vel_stats$q_euc[[1]][4], vel_stats$q_ang[[1]][4])
+)
+
+vel_stats_tbl |>
+  mutate(across(-metric, ~ round(.x, 3))) |>
+  kable(caption = "Cuantiles de velocidades") |>
+  kable_styling(full_width = FALSE)
+```
+```{r}
+p1 <- ETdata_clean |>
+  filter(!is.na(euc_vel), euc_vel <= quantile(euc_vel, .999, na.rm = TRUE)) |>
+  ggplot(aes(euc_vel)) + geom_histogram(bins = 60) +
+  labs(title = "euc_vel (<= 99.9%)", x = "m/s", y = "count")
+
+p2 <- ETdata_clean |>
+  filter(!is.na(ang_vel), ang_vel <= quantile(ang_vel, .999, na.rm = TRUE)) |>
+  ggplot(aes(ang_vel)) + geom_histogram(bins = 60) +
+  labs(title = "ang_vel (<= 99.9%)", x = "deg/s", y = "count")
+
+p1
+p2
+```
+# 7. Interpolación a 120 Hz (regularidad del grid)
+```{r}
+grid_ok <- Interpdata |>
+  group_by(uniqueID) |>
+  summarize(
+    n = n(),
+    all_equal_dt = all(abs(dt_ms - DT_MS) < 1e-6),
+    min_t = min(t_ms), max_t = max(t_ms),
+    span_s = (max_t - min_t)/1000
+  )
+
+glue("Trials con dt_ms == DT_MS exacto: {sum(grid_ok$all_equal_dt)} / {nrow(grid_ok)}")
+
+grid_ok |>
+  arrange(desc(span_s)) |>
+  slice_head(n = 10) |>
+  mutate(across(c(min_t, max_t, span_s), ~ round(.x, 3))) |>
+  kable(caption = "Top 10 trials por duración (Interpdata)") |>
+  kable_styling(full_width = FALSE)
+```
+
+# 8. Consistencia de IDs entre ETdata_clean e Interpdata
+
+```{r}
+ids_et <- ETdata_clean |> distinct(uniqueID) |> arrange(uniqueID)
+ids_ip <- Interpdata   |> distinct(uniqueID) |> arrange(uniqueID)
+
+n_miss_et_in_ip <- sum(!(ids_et$uniqueID %in% ids_ip$uniqueID))
+n_miss_ip_in_et <- sum(!(ids_ip$uniqueID %in% ids_et$uniqueID))
+
+tibble(
+  missing_ET_in_Interpdata = n_miss_et_in_ip,
+  missing_Interpdata_in_ET = n_miss_ip_in_et
+) |>
+  kable() |>
+  kable_styling(full_width = FALSE)
+```
+
+# 9. Plots diagnósticos rápidos
+```{r}
+# 3 trials aleatorios: trayectoria 2D en la balda
+sample_ids <- sample(unique(ETdata_clean$uniqueID), size = min(3, length(unique(ETdata_clean$uniqueID))))
+ETdata_clean |>
+  filter(uniqueID %in% sample_ids, invalidWindow == 0) |>
+  ggplot(aes(planeIntersect_x, planeIntersect_y, group = uniqueID, color = uniqueID)) +
+  geom_path(alpha = 0.6) +
+  coord_equal(xlim = c(-SHELF_BOUND, SHELF_BOUND), ylim = c(-SHELF_BOUND, SHELF_BOUND)) +
+  labs(title = "Trayectorias 2D (m) por trial (muestras válidas)")
+```
+
+```{r}
+# Serie temporal corta de euc_vel para esos trials
+ETdata_clean |>
+  filter(uniqueID %in% sample_ids, invalidWindow == 0) |>
+  mutate(t_s = t_ms/1000) |>
+  ggplot(aes(t_s, euc_vel, color = uniqueID)) +
+  geom_line(alpha = 0.6) +
+  labs(title = "euc_vel a lo largo del tiempo", x = "t (s)", y = "m/s")
+```
+# 10. Resumen de flags y guardado de reporte
+```{r}
+issues <- list(
+  pct_non_monotone_trials   = mean(!mono_tbl$is_monotone) * 100,
+  pct_t1_in_range           = mean(anchors_ok$t1_in_range) * 100,
+  pct_tf_in_range           = mean(anchors_ok$tf_in_range) * 100,
+  pct_bStart_in_range       = mean(anchors_ok$bStart_in_range) * 100,
+  pct_bDetect_in_range      = mean(anchors_ok$bDetect_in_range) * 100,
+  pct_detect_consistent     = mean(anchors_ok$detect_consistent) * 100,
+  pct_invalidData_global    = mean(ETdata_clean$invalidData == 1, na.rm = TRUE) * 100,
+  pct_invalidWindow_global  = mean(ETdata_clean$invalidWindow == 1, na.rm = TRUE) * 100,
+  px_min = min(ETdata_clean$planeIntersect_x, na.rm = TRUE),
+  px_max = max(ETdata_clean$planeIntersect_x, na.rm = TRUE),
+  py_min = min(ETdata_clean$planeIntersect_y, na.rm = TRUE),
+  py_max = max(ETdata_clean$planeIntersect_y, na.rm = TRUE),
+  interp_all_equal_dt       = mean(grid_ok$all_equal_dt) * 100,
+  ids_missing_et_in_ip      = sum(!(ids_et$uniqueID %in% ids_ip$uniqueID)),
+  ids_missing_ip_in_et      = sum(!(ids_ip$uniqueID %in% ids_et$uniqueID))
+)
+
+issues_chr <- capture.output(str(issues))
+writeLines(issues_chr, con = file.path(RESULTS_DIR, "sanity_summary.txt"))
+
+cat("**Resumen escrito en** `results/sanity_summary.txt`")
+```
+
+11. Notas de interpretación rápida
+	•	t_ms monotónico: debe ser monotónico dentro de cada uniqueID. Si aparece algún caso no monotónico, revisar glitches previos.
+	•	dt_ms ~ 8.33 ms: la mayoría de dt deberían concentrarse en ese valor; colas largas indican pérdidas o pausas.
+	•	Anclas/beeps: tiempos relativos deben caer dentro del rango de cada trial; beepDetectionTrial debe ser consistente con beepDetectTime_ms (NA vs. no NA).
+	•	Proyección: la mayoría de puntos dentro de ±SHELF_BOUND; NA altos o % fuera de rango suele indicar fallo de proyección o tracking.
+	•	Invalid/invalidWindow: el padding con PAD_BLINK_N hace crecer invalidWindow respecto a invalidData. Útil para filtrar parpadeos y oclusiones.
+	•	Velocidades: inspeccionar cuantiles altos (q99–q999) para detectar picos no fisiológicos (artefactos).
+	•	Interpolación: en Interpdata, dt_ms debe ser exactamente DT_MS en ~100% de trials.
+	•	Consistencia de IDs: ambos datasets deben tener el mismo conjunto de uniqueID.
