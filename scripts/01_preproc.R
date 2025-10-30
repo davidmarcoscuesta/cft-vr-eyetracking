@@ -116,17 +116,27 @@ ETdata <- ETdata %>%
   dplyr::select(order(colnames(.)))
 
 ## Remove the single largest dt glitch and re-compute; known tail glitch in "8_7"
-rm_row <- which.max(ETdata$dt) - 1
+rm_row <- which.max(ETdata$dt_ms) - 1
 if (length(rm_row) == 1 && rm_row > 0) {
   ETdata <- ETdata[-rm_row,] %>%
     dplyr::group_by(uniqueID) %>%
-    dplyr::mutate(t = as.numeric(SysTime - SysTime[1]), dt = c(0, diff(t))) %>%
+    dplyr::mutate(
+      t_ms  = as.numeric((SysTime - SysTime[1]) / clock::duration_milliseconds(1)),
+      dt_ms = c(0, diff(t_ms))
+    ) %>%
     dplyr::ungroup()
 }
-ETdata <- ETdata %>% dplyr::filter(!(uniqueID == "8_7" & t >= 33663))
+# Glitch conocido en "8_7": ahora umbral en ms
+ETdata <- ETdata %>% dplyr::filter(!(uniqueID == "8_7" & t_ms >= 33663))
 
 ## Merge Trialdata
 ETdata <- dplyr::left_join(ETdata, Trialdata, by = c("subjectNr","trialNr","uniqueID")) %>%
+  dplyr::group_by(uniqueID) %>%
+  dplyr::mutate(
+    targ1StartTime  = as.numeric((targ1StartTime  - SysTime[1]) / clock::duration_milliseconds(1)),
+    trialFinishTime = as.numeric((trialFinishTime - SysTime[1]) / clock::duration_milliseconds(1))
+  ) %>%
+  dplyr::ungroup() %>%
   dplyr::select(order(colnames(.)))
 
 ## Make trial-relative anchors (ms from trial start)
