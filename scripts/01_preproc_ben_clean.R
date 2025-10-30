@@ -129,7 +129,7 @@ Clickdata <- left_join(Clickdata,
 load(raw_path("preProcessedETdata.Rdata"))  
 
 # =========================
-# Exclusiones (igual que Ben)
+# Exclusions 
 # =========================
 ETdata <- ETdata %>% group_by(uniqueID) %>% 
   mutate(invalidData = ifelse(planeIntersect_x < -1.5 | planeIntersect_x > 1.5 |
@@ -165,7 +165,7 @@ exclude_trials <- tmp %>% filter(score <= scoreCutoff) %>% .$uniqueID
 ETdata <- ETdata %>% filter(!(uniqueID %in% exclude_trials) | beepDetectionTrial==1)
 
 # =========================
-# Interpolación (igual que Ben) + **FIX de paréntesis**
+# Interpolation + **FIX de paréntesis**
 # =========================
 if (exists("Interpdata")) rm(Interpdata)
 for (id in unique(ETdata$uniqueID)) {
@@ -197,13 +197,13 @@ Interpdata <- Interpdata %>%
          eucDist = sqrt(xdiff^2 + ydiff^2),
          euc_vel = eucDist/dt,
          theta2D = rad2deg(atan2(ydiff, xdiff)),
-         ang_vel = theta2D/dt) %>%     # <<<<<< FIX: un solo paréntesis aquí
+         ang_vel = theta2D/dt) %>%     
   select(-c(xdiff, ydiff, eucDist, theta2D)) %>% 
   ungroup() %>% 
   select(order(colnames(.)))
 
 # =========================
-# Guardado (mismos nombres que Ben, en data/processed)
+# Saves
 # =========================
 save(Trialdata, file=file.path(PROC_DIR, "Trialdata.Rdata")); write.csv(Trialdata, file.path(PROC_DIR,"Trialdata.csv"), row.names=FALSE)
 save(Clickdata,  file=file.path(PROC_DIR, "Clickdata.Rdata")); write.csv(Clickdata,  file.path(PROC_DIR,"Clickdata.csv"),  row.names=FALSE)
