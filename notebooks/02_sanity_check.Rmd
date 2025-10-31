@@ -2,29 +2,261 @@
 title: "02_sanity_check"
 author: "David Cuesta"
 date: "2025-10-31"
-output: html_document
+output: html_document:
+  toc: true
+  number_sections: true
+  df_print: paged
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+```{r}
+suppressPackageStartupMessages({
+  library(tidyverse)
+})
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+# ---------- Paths & loaders ----------
+candidate_paths <- c(
+  "data/processed/Interpdata_clean.Rdata",
+  "../data/processed/Interpdata_clean.Rdata",
+  "../../data/processed/Interpdata_clean.Rdata"
+)
 
-```{r cars}
-summary(cars)
+candidate_csvs <- c(
+  "data/processed/Interpdata_clean.csv",
+  "../data/processed/Interpdata_clean.csv",
+  "../../data/processed/Interpdata_clean.csv"
+)
+
+load_interpdata <- function(){
+  for(p in candidate_paths){
+    if (file.exists(p)) {
+      load(p)   # should create Interpdata
+      if (exists("Interpdata")) {
+        message("Loaded Rdata: ", p)
+        return(Interpdata)
+      }
+    }
+  }
+  for(p in candidate_csvs){
+    if (file.exists(p)) {
+      message("Loaded CSV: ", p)
+      return(readr::read_csv(p, show_col_types = FALSE))
+    }
+  }
+  stop("No pude cargar Interpdata_clean (ni .Rdata ni .csv) en rutas candidatas.")
+}
+
+Interpdata <- load_interpdata()
+
+# Comprobaciones mínimas
+stopifnot(all(c("uniqueID","t_ms","planeIntersect_x","planeIntersect_y") %in% names(Interpdata)))
+if (!"dt_ms" %in% names(Interpdata)) {
+  stop("Interpdata no contiene dt_ms. Vuelve a guardar Interpdata_clean con dt_ms (ver 01_preproc).")
+}
+
+# Variables derivadas (si no existen)
+if (!all(c("euc_vel","ang_vel") %in% names(Interpdata))) {
+  Interpdata <- Interpdata %>%
+    group_by(uniqueID) %>%
+    arrange(t_ms, .by_group = TRUE) %>%
+    mutate(
+      xdiff   = c(0, diff(planeIntersect_x)),
+      ydiff   = c(0, diff(planeIntersect_y)),
+      dist    = sqrt(xdiff^2 + ydiff^2),
+      euc_vel = dist / (dt_ms/1000),
+      theta2D = atan2(ydiff, xdiff) * 180/pi,
+      ang_vel = theta2D / (dt_ms/1000)
+    ) %>%
+    ungroup() %>%
+    select(-xdiff, -ydiff, -dist, -theta2D)
+}
+
+# Anclas (si existen, las usamos)
+has_targ1 <- "t_targ1StartTime_ms" %in% names(Interpdata)
+if (!has_targ1) {
+  stop("Falta t_targ1StartTime_ms en Interpdata. Asegúrate de crearla en 01_preproc.")
+}
+
+# ---------- Parámetros a explorar ----------
+grid <- expand.grid(
+  win_ms   = c(200, 300, 400, 600),   # tamaño de ventana
+  step_ms  = c(20, 40, 80),           # paso entre centros
+  range_ms = c(2000, 3000),           # ventana total alrededor del evento (±range)
+  k        = c(1, 2, 3),              # nº ventanas a promediar justo antes y justo después de 0
+  stringsAsFactors = FALSE
+)
+
+# Métrica a resumir por ventana
+signal_vars <- c("euc_vel", "ang_vel")  # puedes añadir otras (DFA_alpha si ya la calculas)
+agg_funs <- list(
+  mean = ~mean(.x, na.rm=TRUE),
+  sd   = ~sd(.x, na.rm=TRUE),
+  rms  = ~sqrt(mean(.x^2, na.rm=TRUE))
+)
+
+# ---------- Helpers ----------
+cohen_d <- function(x, y){
+  x <- x[is.finite(x)]; y <- y[is.finite(y)]
+  nx <- length(x); ny <- length(y)
+  if (nx < 2 || ny < 2) return(NA_real_)
+  mx <- mean(x); my <- mean(y)
+  sdx <- sd(x);  sdy <- sd(y)
+  sp <- sqrt(((nx-1)*sdx^2 + (ny-1)*sdy^2) / (nx+ny-2))
+  if (!is.finite(sp) || sp == 0) return(NA_real_)
+  (my - mx) / sp
+}
+
+roll_windows_centers <- function(step_ms, range_ms){
+  seq(-range_ms, +range_ms, by = step_ms)
+}
+
+summarise_window <- function(df, t_center, win_ms){
+  half <- win_ms/2
+  slice <- df %>% filter(t_targ1StartTime_ms >= (t_center - half),
+                         t_targ1StartTime_ms <  (t_center + half))
+  if (nrow(slice) == 0) return(NULL)
+
+  # Agregamos por señal
+  out <- tibble(center_ms = t_center,
+                n_samples = nrow(slice))
+  for (v in signal_vars){
+    vec <- slice[[v]]
+    out[[paste0(v,"_mean")]] <- agg_funs$mean(vec)
+    out[[paste0(v,"_sd")]]   <- agg_funs$sd(vec)
+    out[[paste0(v,"_rms")]]  <- agg_funs$rms(vec)
+  }
+  out
+}
+
+windowize_trial <- function(trial_df, win_ms, step_ms, range_ms){
+  centers <- roll_windows_centers(step_ms, range_ms)
+  res <- map_dfr(centers, ~ summarise_window(trial_df, .x, win_ms))
+  if (nrow(res) == 0) return(NULL)
+  mutate(res, uniqueID = trial_df$uniqueID[1])
+}
+
+windowize_all <- function(data, win_ms, step_ms, range_ms){
+  data %>%
+    group_by(uniqueID) %>%
+    group_split() %>%
+    map_dfr(~ windowize_trial(.x, win_ms, step_ms, range_ms))
+}
+
+closest_k <- function(centers, k, side = c("neg","pos")){
+  side <- match.arg(side)
+  if (side == "neg"){
+    cand <- centers[centers < 0]
+    cand <- cand[order(abs(cand))]
+    head(cand, k)
+  } else {
+    cand <- centers[centers >= 0]
+    cand <- cand[order(abs(cand))]
+    head(cand, k)
+  }
+}
+
+evaluate_combo <- function(win_ms, step_ms, range_ms, k){
+  W <- windowize_all(Interpdata, win_ms, step_ms, range_ms)
+  if (is.null(W) || nrow(W) == 0) {
+    return(tibble(win_ms, step_ms, range_ms, k,
+                  coverage=0, n_trials=0,
+                  euc_delta=NA, euc_d=NA, euc_snr=NA, euc_var_intra=NA,
+                  ang_delta=NA, ang_d=NA, ang_snr=NA, ang_var_intra=NA))
+  }
+
+  # cobertura: trials con k ventanas a cada lado disponibles
+  centers_by_trial <- W %>%
+    group_by(uniqueID) %>%
+    summarise(centers = list(sort(unique(center_ms))), .groups="drop")
+
+  keep_ids <- centers_by_trial %>%
+    mutate(
+      has_neg = map_lgl(centers, ~ length(closest_k(.x, k, "neg")) == k),
+      has_pos = map_lgl(centers, ~ length(closest_k(.x, k, "pos")) == k)
+    ) %>%
+    filter(has_neg & has_pos) %>%
+    pull(uniqueID)
+
+  coverage <- length(keep_ids) / n_distinct(Interpdata$uniqueID)
+  if (length(keep_ids) == 0) {
+    return(tibble(win_ms, step_ms, range_ms, k,
+                  coverage=coverage, n_trials=0,
+                  euc_delta=NA, euc_d=NA, euc_snr=NA, euc_var_intra=NA,
+                  ang_delta=NA, ang_d=NA, ang_snr=NA, ang_var_intra=NA))
+  }
+
+  Wk <- W %>% filter(uniqueID %in% keep_ids)
+
+  # pre y post por trial (promedio de las k ventanas más cercanas a 0 en cada lado)
+  summarise_side <- function(df_side){
+    tibble(
+      euc_mean = mean(df_side$euc_vel_mean, na.rm=TRUE),
+      euc_sd   = mean(df_side$euc_vel_sd,   na.rm=TRUE),
+      ang_mean = mean(df_side$ang_vel_mean, na.rm=TRUE),
+      ang_sd   = mean(df_side$ang_vel_sd,   na.rm=TRUE)
+    )
+  }
+
+  trial_summ <- Wk %>%
+    group_by(uniqueID) %>%
+    summarise(
+      neg_centers = list(closest_k(center_ms, k, "neg")),
+      pos_centers = list(closest_k(center_ms, k, "pos")),
+      .groups="drop"
+    ) %>%
+    rowwise() %>%
+    mutate(
+      pre  = list( Wk %>% filter(uniqueID==uniqueID, center_ms %in% neg_centers) ),
+      post = list( Wk %>% filter(uniqueID==uniqueID, center_ms %in% pos_centers) ),
+      pre_s  = list(summarise_side(pre)),
+      post_s = list(summarise_side(post))
+    ) %>%
+    ungroup() %>%
+    mutate(
+      euc_pre  = map_dbl(pre_s,  ~ .x$euc_mean),
+      euc_post = map_dbl(post_s, ~ .x$euc_mean),
+      ang_pre  = map_dbl(pre_s,  ~ .x$ang_mean),
+      ang_post = map_dbl(post_s, ~ .x$ang_mean),
+      # varianza intra (promedio de sd’s dentro de ventanas)
+      euc_sd_pre  = map_dbl(pre_s,  ~ .x$euc_sd),
+      euc_sd_post = map_dbl(post_s, ~ .x$euc_sd),
+      ang_sd_pre  = map_dbl(pre_s,  ~ .x$ang_sd),
+      ang_sd_post = map_dbl(post_s, ~ .x$ang_sd)
+    )
+
+  # métricas por combinación
+  euc_delta <- mean(trial_summ$euc_post - trial_summ$euc_pre, na.rm=TRUE)
+  ang_delta <- mean(trial_summ$ang_post - trial_summ$ang_pre, na.rm=TRUE)
+
+  euc_d  <- cohen_d(trial_summ$euc_pre, trial_summ$euc_post)
+  ang_d  <- cohen_d(trial_summ$ang_pre, trial_summ$ang_post)
+
+  # SNR: |delta| / sd_pooled de medias por trial
+  pooled_sd <- function(a,b){
+    a <- a[is.finite(a)]; b <- b[is.finite(b)]
+    sd(c(a,b), na.rm=TRUE)
+  }
+  euc_snr <- abs(euc_delta) / pooled_sd(trial_summ$euc_pre, trial_summ$euc_post)
+  ang_snr <- abs(ang_delta) / pooled_sd(trial_summ$ang_pre, trial_summ$ang_post)
+
+  # varianza intra promedio (menor es mejor)
+  euc_var_intra <- mean(c(trial_summ$euc_sd_pre, trial_summ$euc_sd_post), na.rm=TRUE)^2
+  ang_var_intra <- mean(c(trial_summ$ang_sd_pre, trial_summ$ang_sd_post), na.rm=TRUE)^2
+
+  tibble(
+    win_ms, step_ms, range_ms, k,
+    coverage = coverage,
+    n_trials = length(keep_ids),
+    euc_delta = euc_delta, euc_d = euc_d, euc_snr = euc_snr, euc_var_intra = euc_var_intra,
+    ang_delta = ang_delta, ang_d = ang_d, ang_snr = ang_snr, ang_var_intra = ang_var_intra
+  )
+}
+```
+```{r}
+
 ```
 
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
