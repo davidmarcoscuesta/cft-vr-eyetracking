@@ -1,0 +1,650 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+\documentclass[
+]{article}
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{graphicx}
+\makeatletter
+\newsavebox\pandoc@box
+\newcommand*\pandocbounded[1]{% scales image to fit in text height/width
+  \sbox\pandoc@box{#1}%
+  \Gscale@div\@tempa{\textheight}{\dimexpr\ht\pandoc@box+\dp\pandoc@box\relax}%
+  \Gscale@div\@tempb{\linewidth}{\wd\pandoc@box}%
+  \ifdim\@tempb\p@<\@tempa\p@\let\@tempa\@tempb\fi% select the smaller of both
+  \ifdim\@tempa\p@<\p@\scalebox{\@tempa}{\usebox\pandoc@box}%
+  \else\usebox{\pandoc@box}%
+  \fi%
+}
+% Set default figure placement to htbp
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage{colortbl}
+\usepackage{pdflscape}
+\usepackage{tabu}
+\usepackage{threeparttable}
+\usepackage{threeparttablex}
+\usepackage[normalem]{ulem}
+\usepackage{makecell}
+\usepackage{xcolor}
+\usepackage{bookmark}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+\hypersetup{
+  pdftitle={Sanity Check --- CFT VR Eye-tracking},
+  pdfauthor={David Marcos Cuesta},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\title{Sanity Check --- CFT VR Eye-tracking}
+\author{David Marcos Cuesta}
+\date{2025-10-30 16:53}
+
+\begin{document}
+\maketitle
+
+{
+\setcounter{tocdepth}{2}
+\tableofcontents
+}
+\section{0 Loading data and
+Environment}\label{loading-data-and-environment}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Intenta cargar los RData; si no existen, usa los CSV}
+\NormalTok{et\_rdata }\OtherTok{\textless{}{-}} \FunctionTok{file.path}\NormalTok{(DATA\_PROCESSED, }\StringTok{"ETdata\_clean.Rdata"}\NormalTok{)}
+\NormalTok{ip\_rdata }\OtherTok{\textless{}{-}} \FunctionTok{file.path}\NormalTok{(DATA\_PROCESSED, }\StringTok{"Interpdata\_clean.Rdata"}\NormalTok{)}
+\NormalTok{et\_csv   }\OtherTok{\textless{}{-}} \FunctionTok{file.path}\NormalTok{(DATA\_PROCESSED, }\StringTok{"ETdata\_clean.csv"}\NormalTok{)}
+\NormalTok{ip\_csv   }\OtherTok{\textless{}{-}} \FunctionTok{file.path}\NormalTok{(DATA\_PROCESSED, }\StringTok{"Interpdata\_clean.csv"}\NormalTok{)}
+
+\CommentTok{\# Carga ETdata\_clean}
+\ControlFlowTok{if}\NormalTok{ (}\FunctionTok{file.exists}\NormalTok{(et\_rdata)) \{}
+  \FunctionTok{load}\NormalTok{(et\_rdata)  }\CommentTok{\# debe crear ETdata\_clean}
+\NormalTok{\} }\ControlFlowTok{else} \ControlFlowTok{if}\NormalTok{ (}\FunctionTok{file.exists}\NormalTok{(et\_csv)) \{}
+\NormalTok{  ETdata\_clean }\OtherTok{\textless{}{-}}\NormalTok{ readr}\SpecialCharTok{::}\FunctionTok{read\_csv}\NormalTok{(et\_csv, }\AttributeTok{show\_col\_types =} \ConstantTok{FALSE}\NormalTok{)}
+\NormalTok{\}}
+
+\CommentTok{\# Carga Interpdata}
+\ControlFlowTok{if}\NormalTok{ (}\FunctionTok{file.exists}\NormalTok{(ip\_rdata)) \{}
+  \FunctionTok{load}\NormalTok{(ip\_rdata)  }\CommentTok{\# debe crear Interpdata}
+\NormalTok{\} }\ControlFlowTok{else} \ControlFlowTok{if}\NormalTok{ (}\FunctionTok{file.exists}\NormalTok{(ip\_csv)) \{}
+\NormalTok{  Interpdata }\OtherTok{\textless{}{-}}\NormalTok{ readr}\SpecialCharTok{::}\FunctionTok{read\_csv}\NormalTok{(ip\_csv, }\AttributeTok{show\_col\_types =} \ConstantTok{FALSE}\NormalTok{)}
+\NormalTok{\}}
+
+\FunctionTok{stopifnot}\NormalTok{(}\StringTok{"ETdata\_clean no encontrado"} \OtherTok{=} \FunctionTok{exists}\NormalTok{(}\StringTok{"ETdata\_clean"}\NormalTok{))}
+\FunctionTok{stopifnot}\NormalTok{(}\StringTok{"Interpdata no encontrado"}   \OtherTok{=} \FunctionTok{exists}\NormalTok{(}\StringTok{"Interpdata"}\NormalTok{))}
+
+\CommentTok{\# Si uniqueID llega como \textless{}chr\textgreater{} o \textless{}int\textgreater{} en distinto formato, normaliza:}
+\NormalTok{ETdata\_clean }\OtherTok{\textless{}{-}}\NormalTok{ ETdata\_clean }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{mutate}\NormalTok{(}\AttributeTok{uniqueID =} \FunctionTok{as.character}\NormalTok{(uniqueID))}
+\NormalTok{Interpdata   }\OtherTok{\textless{}{-}}\NormalTok{ Interpdata   }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{mutate}\NormalTok{(}\AttributeTok{uniqueID =} \FunctionTok{as.character}\NormalTok{(uniqueID))}
+\end{Highlighting}
+\end{Shaded}
+
+\section{1 Existencia, dimensiones y columnas
+clave}\label{existencia-dimensiones-y-columnas-clave}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{et\_dim }\OtherTok{\textless{}{-}} \FunctionTok{dim}\NormalTok{(ETdata\_clean)}
+\NormalTok{ip\_dim }\OtherTok{\textless{}{-}} \FunctionTok{dim}\NormalTok{(Interpdata)}
+
+\NormalTok{cols\_et\_req }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\StringTok{"uniqueID"}\NormalTok{,}\StringTok{"subjectNr"}\NormalTok{,}\StringTok{"trialNr"}\NormalTok{,}\StringTok{"SysTime"}\NormalTok{,}\StringTok{"t\_ms"}\NormalTok{,}\StringTok{"dt\_ms"}\NormalTok{,}
+                 \StringTok{"planeIntersect\_x"}\NormalTok{,}\StringTok{"planeIntersect\_y"}\NormalTok{,}\StringTok{"invalidData"}\NormalTok{,}\StringTok{"invalidWindow"}\NormalTok{)}
+\NormalTok{cols\_ip\_req }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\StringTok{"uniqueID"}\NormalTok{,}\StringTok{"subjectNr"}\NormalTok{,}\StringTok{"trialNr"}\NormalTok{,}\StringTok{"t\_ms"}\NormalTok{,}\StringTok{"dt\_ms"}\NormalTok{,}
+                 \StringTok{"planeIntersect\_x"}\NormalTok{,}\StringTok{"planeIntersect\_y"}\NormalTok{)}
+
+\NormalTok{chk1 }\OtherTok{\textless{}{-}} \FunctionTok{all}\NormalTok{(cols\_et\_req }\SpecialCharTok{\%in\%} \FunctionTok{names}\NormalTok{(ETdata\_clean))}
+\NormalTok{chk2 }\OtherTok{\textless{}{-}} \FunctionTok{all}\NormalTok{(cols\_ip\_req }\SpecialCharTok{\%in\%} \FunctionTok{names}\NormalTok{(Interpdata))}
+
+\FunctionTok{tibble}\NormalTok{(}
+  \AttributeTok{dataset =} \FunctionTok{c}\NormalTok{(}\StringTok{"ETdata\_clean"}\NormalTok{,}\StringTok{"Interpdata"}\NormalTok{),}
+  \AttributeTok{n\_rows  =} \FunctionTok{c}\NormalTok{(et\_dim[}\DecValTok{1}\NormalTok{], ip\_dim[}\DecValTok{1}\NormalTok{]),}
+  \AttributeTok{n\_cols  =} \FunctionTok{c}\NormalTok{(et\_dim[}\DecValTok{2}\NormalTok{], ip\_dim[}\DecValTok{2}\NormalTok{]),}
+  \AttributeTok{required\_columns\_present =} \FunctionTok{c}\NormalTok{(chk1, chk2)}
+\NormalTok{) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{kable}\NormalTok{() }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{kable\_styling}\NormalTok{(}\AttributeTok{full\_width =} \ConstantTok{FALSE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[t]{lrrl}
+\toprule
+dataset & n\_rows & n\_cols & required\_columns\_present\\
+\midrule
+ETdata\_clean & 614653 & 84 & TRUE\\
+Interpdata & 614513 & 24 & TRUE\\
+\bottomrule
+\end{longtable}
+
+\section{2 Estructura temporal (monotonía y
+dt)}\label{estructura-temporal-monotonuxeda-y-dt}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Monotonía de t\_ms por trial}
+\NormalTok{mono\_tbl }\OtherTok{\textless{}{-}}\NormalTok{ ETdata\_clean }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{group\_by}\NormalTok{(uniqueID) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{summarize}\NormalTok{(}
+    \AttributeTok{n =} \FunctionTok{n}\NormalTok{(),}
+    \AttributeTok{is\_monotone =} \FunctionTok{all}\NormalTok{(}\FunctionTok{diff}\NormalTok{(t\_ms) }\SpecialCharTok{\textgreater{}=} \DecValTok{0}\NormalTok{),}
+    \AttributeTok{min\_dt      =} \FunctionTok{suppressWarnings}\NormalTok{(}\FunctionTok{min}\NormalTok{(}\FunctionTok{diff}\NormalTok{(t\_ms))),}
+    \AttributeTok{q50\_dt      =} \FunctionTok{suppressWarnings}\NormalTok{(}\FunctionTok{quantile}\NormalTok{(}\FunctionTok{diff}\NormalTok{(t\_ms), }\FloatTok{0.50}\NormalTok{, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{)),}
+    \AttributeTok{q95\_dt      =} \FunctionTok{suppressWarnings}\NormalTok{(}\FunctionTok{quantile}\NormalTok{(}\FunctionTok{diff}\NormalTok{(t\_ms), }\FloatTok{0.95}\NormalTok{, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{)),}
+    \AttributeTok{max\_dt      =} \FunctionTok{suppressWarnings}\NormalTok{(}\FunctionTok{max}\NormalTok{(}\FunctionTok{diff}\NormalTok{(t\_ms)))}
+\NormalTok{  )}
+
+\NormalTok{pct\_nonmono }\OtherTok{\textless{}{-}} \FunctionTok{mean}\NormalTok{(}\SpecialCharTok{!}\NormalTok{mono\_tbl}\SpecialCharTok{$}\NormalTok{is\_monotone) }\SpecialCharTok{*} \DecValTok{100}
+\NormalTok{glitch\_top  }\OtherTok{\textless{}{-}}\NormalTok{ mono\_tbl }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{arrange}\NormalTok{(}\FunctionTok{desc}\NormalTok{(max\_dt)) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{slice\_head}\NormalTok{(}\AttributeTok{n =} \DecValTok{10}\NormalTok{)}
+
+\FunctionTok{glue}\NormalTok{(}\StringTok{"Trials con t\_ms no monótono: \{round(pct\_nonmono,2)\}\%"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Trials con t_ms no monótono: 0%
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{glitch\_top }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption =} \StringTok{"Top 10 trials con mayor max\_dt"}\NormalTok{) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{kable\_styling}\NormalTok{(}\AttributeTok{full\_width =} \ConstantTok{FALSE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[t]{lrlrrrr}
+\caption{\label{tab:unnamed-chunk-2}Top 10 trials con mayor max_dt}\\
+\toprule
+uniqueID & n & is\_monotone & min\_dt & q50\_dt & q95\_dt & max\_dt\\
+\midrule
+7\_9 & 5019 & TRUE & 5 & 8 & 11 & 70\\
+9\_14 & 4392 & TRUE & 5 & 8 & 11 & 68\\
+7\_14 & 2982 & TRUE & 5 & 8 & 11 & 67\\
+26\_21 & 3385 & TRUE & 5 & 8 & 11 & 66\\
+11\_11 & 1856 & TRUE & 5 & 8 & 11 & 65\\
+\addlinespace
+18\_3 & 3479 & TRUE & 5 & 8 & 11 & 63\\
+12\_13 & 4022 & TRUE & 5 & 8 & 11 & 62\\
+9\_10 & 3181 & TRUE & 5 & 8 & 11 & 60\\
+29\_5 & 4363 & TRUE & 5 & 8 & 11 & 58\\
+29\_18 & 3414 & TRUE & 5 & 8 & 11 & 57\\
+\bottomrule
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{ETdata\_clean }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{filter}\NormalTok{(dt\_ms }\SpecialCharTok{\textgreater{}=} \DecValTok{0}\NormalTok{, dt\_ms }\SpecialCharTok{\textless{}=} \FunctionTok{quantile}\NormalTok{(dt\_ms, }\FloatTok{0.999}\NormalTok{, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{)) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(dt\_ms)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_histogram}\NormalTok{(}\AttributeTok{bins =} \DecValTok{60}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{geom\_vline}\NormalTok{(}\AttributeTok{xintercept =}\NormalTok{ DT\_MS, }\AttributeTok{linetype =} \DecValTok{2}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}\AttributeTok{title =} \StringTok{"Distribución de dt\_ms (cortado al 99.9\%)"}\NormalTok{,}
+       \AttributeTok{x =} \StringTok{"dt\_ms"}\NormalTok{, }\AttributeTok{y =} \StringTok{"count"}\NormalTok{,}
+       \AttributeTok{subtitle =} \FunctionTok{glue}\NormalTok{(}\StringTok{"Línea discontinua: DT\_MS esperado = \{round(DT\_MS,3)\}"}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\pandocbounded{\includegraphics[keepaspectratio]{01_sanity_check_files/figure-latex/unnamed-chunk-3-1.pdf}}
+\# 3 Anclas y beeps
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Chequeos básicos de coherencia temporal de anclas}
+\NormalTok{anchors\_ok }\OtherTok{\textless{}{-}}\NormalTok{ ETdata\_clean }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{group\_by}\NormalTok{(uniqueID) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{summarize}\NormalTok{(}
+    \AttributeTok{min\_t        =} \FunctionTok{min}\NormalTok{(t\_ms, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{),}
+    \AttributeTok{max\_t        =} \FunctionTok{max}\NormalTok{(t\_ms, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{),}
+    \AttributeTok{t1           =} \FunctionTok{suppressWarnings}\NormalTok{(}\FunctionTok{first}\NormalTok{(targ1StartTime\_ms)),}
+    \AttributeTok{tf           =} \FunctionTok{suppressWarnings}\NormalTok{(}\FunctionTok{first}\NormalTok{(trialFinishTime\_ms)),}
+    \AttributeTok{bStart       =} \FunctionTok{suppressWarnings}\NormalTok{(}\FunctionTok{first}\NormalTok{(beepStartTime\_ms)),}
+    \AttributeTok{bDetect      =} \FunctionTok{suppressWarnings}\NormalTok{(}\FunctionTok{first}\NormalTok{(beepDetectTime\_ms)),}
+    \AttributeTok{n\_beepdetect =} \FunctionTok{suppressWarnings}\NormalTok{(}\FunctionTok{first}\NormalTok{(beepDetectionTrial))}
+\NormalTok{  ) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{mutate}\NormalTok{(}
+    \AttributeTok{t1\_in\_range      =} \FunctionTok{is.na}\NormalTok{(t1)      }\SpecialCharTok{|}\NormalTok{ (t1 }\SpecialCharTok{\textgreater{}=}\NormalTok{ min\_t }\SpecialCharTok{\&}\NormalTok{ t1 }\SpecialCharTok{\textless{}=}\NormalTok{ max\_t),}
+    \AttributeTok{tf\_in\_range      =} \FunctionTok{is.na}\NormalTok{(tf)      }\SpecialCharTok{|}\NormalTok{ (tf }\SpecialCharTok{\textgreater{}=}\NormalTok{ min\_t }\SpecialCharTok{\&}\NormalTok{ tf }\SpecialCharTok{\textless{}=}\NormalTok{ max\_t),}
+    \AttributeTok{bStart\_in\_range  =} \FunctionTok{is.na}\NormalTok{(bStart)  }\SpecialCharTok{|}\NormalTok{ (bStart }\SpecialCharTok{\textgreater{}=}\NormalTok{ min\_t }\SpecialCharTok{\&}\NormalTok{ bStart }\SpecialCharTok{\textless{}=}\NormalTok{ max\_t),}
+    \AttributeTok{bDetect\_in\_range =} \FunctionTok{is.na}\NormalTok{(bDetect) }\SpecialCharTok{|}\NormalTok{ (bDetect }\SpecialCharTok{\textgreater{}=}\NormalTok{ min\_t }\SpecialCharTok{\&}\NormalTok{ bDetect }\SpecialCharTok{\textless{}=}\NormalTok{ max\_t),}
+    \AttributeTok{detect\_consistent =} \FunctionTok{ifelse}\NormalTok{(}\FunctionTok{is.na}\NormalTok{(bDetect), n\_beepdetect }\SpecialCharTok{==} \DecValTok{0}\NormalTok{, n\_beepdetect }\SpecialCharTok{==} \DecValTok{1}\NormalTok{)}
+\NormalTok{  )}
+
+\NormalTok{summ\_anchors }\OtherTok{\textless{}{-}}\NormalTok{ anchors\_ok }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{summarize}\NormalTok{(}
+    \AttributeTok{pct\_t1\_in\_range      =} \FunctionTok{mean}\NormalTok{(t1\_in\_range) }\SpecialCharTok{*} \DecValTok{100}\NormalTok{,}
+    \AttributeTok{pct\_tf\_in\_range      =} \FunctionTok{mean}\NormalTok{(tf\_in\_range) }\SpecialCharTok{*} \DecValTok{100}\NormalTok{,}
+    \AttributeTok{pct\_bStart\_in\_range  =} \FunctionTok{mean}\NormalTok{(bStart\_in\_range) }\SpecialCharTok{*} \DecValTok{100}\NormalTok{,}
+    \AttributeTok{pct\_bDetect\_in\_range =} \FunctionTok{mean}\NormalTok{(bDetect\_in\_range) }\SpecialCharTok{*} \DecValTok{100}\NormalTok{,}
+    \AttributeTok{pct\_detect\_consistent=} \FunctionTok{mean}\NormalTok{(detect\_consistent) }\SpecialCharTok{*} \DecValTok{100}
+\NormalTok{  )}
+
+\NormalTok{summ\_anchors }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{mutate}\NormalTok{(}\FunctionTok{across}\NormalTok{(}\FunctionTok{everything}\NormalTok{(), }\SpecialCharTok{\textasciitilde{}} \FunctionTok{round}\NormalTok{(.x, }\DecValTok{2}\NormalTok{))) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption =} \StringTok{"Coherencia de anclas y beeps (porcentaje OK)"}\NormalTok{) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{kable\_styling}\NormalTok{(}\AttributeTok{full\_width =} \ConstantTok{FALSE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[t]{rrrrr}
+\caption{\label{tab:unnamed-chunk-4}Coherencia de anclas y beeps (porcentaje OK)}\\
+\toprule
+pct\_t1\_in\_range & pct\_tf\_in\_range & pct\_bStart\_in\_range & pct\_bDetect\_in\_range & pct\_detect\_consistent\\
+\midrule
+100 & 100 & 100 & 100 & 100\\
+\bottomrule
+\end{longtable}
+
+\section{4. Proyección al plano: rangos y
+NA}\label{proyecciuxf3n-al-plano-rangos-y-na}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{proj\_stats }\OtherTok{\textless{}{-}}\NormalTok{ ETdata\_clean }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{summarize}\NormalTok{(}
+    \AttributeTok{px\_min =} \FunctionTok{min}\NormalTok{(planeIntersect\_x, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{),}
+    \AttributeTok{px\_max =} \FunctionTok{max}\NormalTok{(planeIntersect\_x, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{),}
+    \AttributeTok{py\_min =} \FunctionTok{min}\NormalTok{(planeIntersect\_y, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{),}
+    \AttributeTok{py\_max =} \FunctionTok{max}\NormalTok{(planeIntersect\_y, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{),}
+    \AttributeTok{pct\_NA\_px =} \FunctionTok{mean}\NormalTok{(}\FunctionTok{is.na}\NormalTok{(planeIntersect\_x)) }\SpecialCharTok{*} \DecValTok{100}\NormalTok{,}
+    \AttributeTok{pct\_NA\_py =} \FunctionTok{mean}\NormalTok{(}\FunctionTok{is.na}\NormalTok{(planeIntersect\_y)) }\SpecialCharTok{*} \DecValTok{100}\NormalTok{,}
+    \AttributeTok{pct\_out\_of\_bounds =} \FunctionTok{mean}\NormalTok{(}
+\NormalTok{      planeIntersect\_x }\SpecialCharTok{\textless{}} \SpecialCharTok{{-}}\NormalTok{SHELF\_BOUND }\SpecialCharTok{|}\NormalTok{ planeIntersect\_x }\SpecialCharTok{\textgreater{}}\NormalTok{ SHELF\_BOUND }\SpecialCharTok{|}
+\NormalTok{      planeIntersect\_y }\SpecialCharTok{\textless{}} \SpecialCharTok{{-}}\NormalTok{SHELF\_BOUND }\SpecialCharTok{|}\NormalTok{ planeIntersect\_y }\SpecialCharTok{\textgreater{}}\NormalTok{ SHELF\_BOUND,}
+      \AttributeTok{na.rm =} \ConstantTok{TRUE}
+\NormalTok{    ) }\SpecialCharTok{*} \DecValTok{100}
+\NormalTok{  )}
+
+\NormalTok{proj\_stats }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{mutate}\NormalTok{(}\FunctionTok{across}\NormalTok{(}\FunctionTok{where}\NormalTok{(is.numeric), }\SpecialCharTok{\textasciitilde{}} \FunctionTok{round}\NormalTok{(.x, }\DecValTok{3}\NormalTok{))) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption =} \StringTok{"Rangos de proyección y \%NA / out{-}of{-}bounds"}\NormalTok{) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{kable\_styling}\NormalTok{(}\AttributeTok{full\_width =} \ConstantTok{FALSE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[t]{rrrrrrr}
+\caption{\label{tab:unnamed-chunk-5}Rangos de proyección y %NA / out-of-bounds}\\
+\toprule
+px\_min & px\_max & py\_min & py\_max & pct\_NA\_px & pct\_NA\_py & pct\_out\_of\_bounds\\
+\midrule
+-80.866 & 7.141 & -24.302 & 1.599 & 0.683 & 0.683 & 0.17\\
+\bottomrule
+\end{longtable}
+
+\section{5. Invalid y invalidWindow (parpadeos +
+padding)}\label{invalid-y-invalidwindow-parpadeos-padding}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{inv\_stats }\OtherTok{\textless{}{-}}\NormalTok{ ETdata\_clean }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{summarize}\NormalTok{(}
+    \AttributeTok{pct\_invalidData   =} \FunctionTok{mean}\NormalTok{(invalidData }\SpecialCharTok{==} \DecValTok{1}\NormalTok{, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{) }\SpecialCharTok{*} \DecValTok{100}\NormalTok{,}
+    \AttributeTok{pct\_invalidWindow =} \FunctionTok{mean}\NormalTok{(invalidWindow }\SpecialCharTok{==} \DecValTok{1}\NormalTok{, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{) }\SpecialCharTok{*} \DecValTok{100}
+\NormalTok{  )}
+
+\NormalTok{inv\_by\_trial }\OtherTok{\textless{}{-}}\NormalTok{ ETdata\_clean }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{group\_by}\NormalTok{(uniqueID) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{summarize}\NormalTok{(}\AttributeTok{prop\_invalid =} \FunctionTok{mean}\NormalTok{(invalidWindow }\SpecialCharTok{==} \DecValTok{1}\NormalTok{, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{)) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{arrange}\NormalTok{(}\FunctionTok{desc}\NormalTok{(prop\_invalid)) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{mutate}\NormalTok{(}\AttributeTok{rank =} \FunctionTok{row\_number}\NormalTok{())}
+
+\NormalTok{inv\_stats }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{mutate}\NormalTok{(}\FunctionTok{across}\NormalTok{(}\FunctionTok{everything}\NormalTok{(), }\SpecialCharTok{\textasciitilde{}} \FunctionTok{round}\NormalTok{(.x, }\DecValTok{2}\NormalTok{))) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption =} \StringTok{"Porcentaje global de muestras inválidas"}\NormalTok{) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{kable\_styling}\NormalTok{(}\AttributeTok{full\_width =} \ConstantTok{FALSE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[t]{rr}
+\caption{\label{tab:unnamed-chunk-6}Porcentaje global de muestras inválidas}\\
+\toprule
+pct\_invalidData & pct\_invalidWindow\\
+\midrule
+0.85 & 3.41\\
+\bottomrule
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{inv\_by\_trial }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{slice\_head}\NormalTok{(}\AttributeTok{n =} \DecValTok{12}\NormalTok{) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption =} \StringTok{"Top 12 trials por proporción de invalidWindow"}\NormalTok{) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{kable\_styling}\NormalTok{(}\AttributeTok{full\_width =} \ConstantTok{FALSE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[t]{lrr}
+\caption{\label{tab:unnamed-chunk-6}Top 12 trials por proporción de invalidWindow}\\
+\toprule
+uniqueID & prop\_invalid & rank\\
+\midrule
+9\_5 & 0.2048371 & 1\\
+3\_12 & 0.0936515 & 2\\
+26\_9 & 0.0924282 & 3\\
+26\_10 & 0.0923567 & 4\\
+12\_0 & 0.0902740 & 5\\
+\addlinespace
+23\_17 & 0.0857070 & 6\\
+9\_13 & 0.0853301 & 7\\
+23\_15 & 0.0846175 & 8\\
+11\_1 & 0.0774236 & 9\\
+3\_3 & 0.0751860 & 10\\
+\addlinespace
+29\_17 & 0.0727798 & 11\\
+7\_19 & 0.0727418 & 12\\
+\bottomrule
+\end{longtable}
+
+\section{6. Velocidades: distribución y
+outliers}\label{velocidades-distribuciuxf3n-y-outliers}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{vel\_stats }\OtherTok{\textless{}{-}}\NormalTok{ ETdata\_clean }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{summarize}\NormalTok{(}
+    \AttributeTok{n\_euc   =} \FunctionTok{sum}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(euc\_vel)),}
+    \AttributeTok{q\_euc   =} \FunctionTok{list}\NormalTok{(}\FunctionTok{quantile}\NormalTok{(euc\_vel, }\AttributeTok{probs =} \FunctionTok{c}\NormalTok{(.}\DecValTok{5}\NormalTok{,.}\DecValTok{9}\NormalTok{,.}\DecValTok{99}\NormalTok{,.}\DecValTok{999}\NormalTok{), }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{)),}
+    \AttributeTok{n\_ang   =} \FunctionTok{sum}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(ang\_vel)),}
+    \AttributeTok{q\_ang   =} \FunctionTok{list}\NormalTok{(}\FunctionTok{quantile}\NormalTok{(ang\_vel, }\AttributeTok{probs =} \FunctionTok{c}\NormalTok{(.}\DecValTok{5}\NormalTok{,.}\DecValTok{9}\NormalTok{,.}\DecValTok{99}\NormalTok{,.}\DecValTok{999}\NormalTok{), }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{))}
+\NormalTok{  )}
+
+\NormalTok{vel\_stats\_tbl }\OtherTok{\textless{}{-}} \FunctionTok{tibble}\NormalTok{(}
+  \AttributeTok{metric =} \FunctionTok{c}\NormalTok{(}\StringTok{"euc\_vel (m/s)"}\NormalTok{,}\StringTok{"ang\_vel (deg/s)"}\NormalTok{),}
+  \AttributeTok{q50 =} \FunctionTok{c}\NormalTok{(vel\_stats}\SpecialCharTok{$}\NormalTok{q\_euc[[}\DecValTok{1}\NormalTok{]][}\DecValTok{1}\NormalTok{], vel\_stats}\SpecialCharTok{$}\NormalTok{q\_ang[[}\DecValTok{1}\NormalTok{]][}\DecValTok{1}\NormalTok{]),}
+  \AttributeTok{q90 =} \FunctionTok{c}\NormalTok{(vel\_stats}\SpecialCharTok{$}\NormalTok{q\_euc[[}\DecValTok{1}\NormalTok{]][}\DecValTok{2}\NormalTok{], vel\_stats}\SpecialCharTok{$}\NormalTok{q\_ang[[}\DecValTok{1}\NormalTok{]][}\DecValTok{2}\NormalTok{]),}
+  \AttributeTok{q99 =} \FunctionTok{c}\NormalTok{(vel\_stats}\SpecialCharTok{$}\NormalTok{q\_euc[[}\DecValTok{1}\NormalTok{]][}\DecValTok{3}\NormalTok{], vel\_stats}\SpecialCharTok{$}\NormalTok{q\_ang[[}\DecValTok{1}\NormalTok{]][}\DecValTok{3}\NormalTok{]),}
+  \AttributeTok{q999=} \FunctionTok{c}\NormalTok{(vel\_stats}\SpecialCharTok{$}\NormalTok{q\_euc[[}\DecValTok{1}\NormalTok{]][}\DecValTok{4}\NormalTok{], vel\_stats}\SpecialCharTok{$}\NormalTok{q\_ang[[}\DecValTok{1}\NormalTok{]][}\DecValTok{4}\NormalTok{])}
+\NormalTok{)}
+
+\NormalTok{vel\_stats\_tbl }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{mutate}\NormalTok{(}\FunctionTok{across}\NormalTok{(}\SpecialCharTok{{-}}\NormalTok{metric, }\SpecialCharTok{\textasciitilde{}} \FunctionTok{round}\NormalTok{(.x, }\DecValTok{3}\NormalTok{))) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption =} \StringTok{"Cuantiles de velocidades"}\NormalTok{) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{kable\_styling}\NormalTok{(}\AttributeTok{full\_width =} \ConstantTok{FALSE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[t]{lrrrr}
+\caption{\label{tab:unnamed-chunk-7}Cuantiles de velocidades}\\
+\toprule
+metric & q50 & q90 & q99 & q999\\
+\midrule
+euc\_vel (m/s) & 0.430 & 6.523 & 25.712 & 41.463\\
+ang\_vel (deg/s) & -444.588 & 17187.435 & 25268.729 & 29597.056\\
+\bottomrule
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{p1 }\OtherTok{\textless{}{-}}\NormalTok{ ETdata\_clean }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{filter}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(euc\_vel), euc\_vel }\SpecialCharTok{\textless{}=} \FunctionTok{quantile}\NormalTok{(euc\_vel, .}\DecValTok{999}\NormalTok{, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{)) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(euc\_vel)) }\SpecialCharTok{+} \FunctionTok{geom\_histogram}\NormalTok{(}\AttributeTok{bins =} \DecValTok{60}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}\AttributeTok{title =} \StringTok{"euc\_vel (\textless{}= 99.9\%)"}\NormalTok{, }\AttributeTok{x =} \StringTok{"m/s"}\NormalTok{, }\AttributeTok{y =} \StringTok{"count"}\NormalTok{)}
+
+\NormalTok{p2 }\OtherTok{\textless{}{-}}\NormalTok{ ETdata\_clean }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{filter}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(ang\_vel), ang\_vel }\SpecialCharTok{\textless{}=} \FunctionTok{quantile}\NormalTok{(ang\_vel, .}\DecValTok{999}\NormalTok{, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{)) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(ang\_vel)) }\SpecialCharTok{+} \FunctionTok{geom\_histogram}\NormalTok{(}\AttributeTok{bins =} \DecValTok{60}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}\AttributeTok{title =} \StringTok{"ang\_vel (\textless{}= 99.9\%)"}\NormalTok{, }\AttributeTok{x =} \StringTok{"deg/s"}\NormalTok{, }\AttributeTok{y =} \StringTok{"count"}\NormalTok{)}
+
+\NormalTok{p1}
+\end{Highlighting}
+\end{Shaded}
+
+\pandocbounded{\includegraphics[keepaspectratio]{01_sanity_check_files/figure-latex/unnamed-chunk-8-1.pdf}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{p2}
+\end{Highlighting}
+\end{Shaded}
+
+\pandocbounded{\includegraphics[keepaspectratio]{01_sanity_check_files/figure-latex/unnamed-chunk-8-2.pdf}}
+\# 7. Interpolación a 120 Hz (regularidad del grid)
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{grid\_ok }\OtherTok{\textless{}{-}}\NormalTok{ Interpdata }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{group\_by}\NormalTok{(uniqueID) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{summarize}\NormalTok{(}
+    \AttributeTok{n =} \FunctionTok{n}\NormalTok{(),}
+    \AttributeTok{all\_equal\_dt =} \FunctionTok{all}\NormalTok{(}\FunctionTok{abs}\NormalTok{(dt\_ms }\SpecialCharTok{{-}}\NormalTok{ DT\_MS) }\SpecialCharTok{\textless{}} \FloatTok{1e{-}6}\NormalTok{),}
+    \AttributeTok{min\_t =} \FunctionTok{min}\NormalTok{(t\_ms), }\AttributeTok{max\_t =} \FunctionTok{max}\NormalTok{(t\_ms),}
+    \AttributeTok{span\_s =}\NormalTok{ (max\_t }\SpecialCharTok{{-}}\NormalTok{ min\_t)}\SpecialCharTok{/}\DecValTok{1000}
+\NormalTok{  )}
+
+\FunctionTok{glue}\NormalTok{(}\StringTok{"Trials con dt\_ms == DT\_MS exacto: \{sum(grid\_ok$all\_equal\_dt)\} / \{nrow(grid\_ok)\}"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Trials con dt_ms == DT_MS exacto: 181 / 181
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{grid\_ok }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{arrange}\NormalTok{(}\FunctionTok{desc}\NormalTok{(span\_s)) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{slice\_head}\NormalTok{(}\AttributeTok{n =} \DecValTok{10}\NormalTok{) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{mutate}\NormalTok{(}\FunctionTok{across}\NormalTok{(}\FunctionTok{c}\NormalTok{(min\_t, max\_t, span\_s), }\SpecialCharTok{\textasciitilde{}} \FunctionTok{round}\NormalTok{(.x, }\DecValTok{3}\NormalTok{))) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption =} \StringTok{"Top 10 trials por duración (Interpdata)"}\NormalTok{) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{kable\_styling}\NormalTok{(}\AttributeTok{full\_width =} \ConstantTok{FALSE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[t]{lrlrrr}
+\caption{\label{tab:unnamed-chunk-9}Top 10 trials por duración (Interpdata)}\\
+\toprule
+uniqueID & n & all\_equal\_dt & min\_t & max\_t & span\_s\\
+\midrule
+9\_0 & 8915 & TRUE & 0 & 74283.33 & 74.283\\
+9\_5 & 8804 & TRUE & 0 & 73358.33 & 73.358\\
+29\_4 & 5927 & TRUE & 0 & 49383.33 & 49.383\\
+29\_6 & 5850 & TRUE & 0 & 48741.67 & 48.742\\
+29\_8 & 5819 & TRUE & 0 & 48483.33 & 48.483\\
+\addlinespace
+9\_13 & 5799 & TRUE & 0 & 48316.67 & 48.317\\
+26\_3 & 5206 & TRUE & 0 & 43375.00 & 43.375\\
+7\_8 & 5082 & TRUE & 0 & 42341.67 & 42.342\\
+3\_5 & 5050 & TRUE & 0 & 42075.00 & 42.075\\
+7\_9 & 5023 & TRUE & 0 & 41850.00 & 41.850\\
+\bottomrule
+\end{longtable}
+
+\section{8. Consistencia de IDs entre ETdata\_clean e
+Interpdata}\label{consistencia-de-ids-entre-etdata_clean-e-interpdata}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{ids\_et }\OtherTok{\textless{}{-}}\NormalTok{ ETdata\_clean }\SpecialCharTok{|\textgreater{}} \FunctionTok{distinct}\NormalTok{(uniqueID) }\SpecialCharTok{|\textgreater{}} \FunctionTok{arrange}\NormalTok{(uniqueID)}
+\NormalTok{ids\_ip }\OtherTok{\textless{}{-}}\NormalTok{ Interpdata   }\SpecialCharTok{|\textgreater{}} \FunctionTok{distinct}\NormalTok{(uniqueID) }\SpecialCharTok{|\textgreater{}} \FunctionTok{arrange}\NormalTok{(uniqueID)}
+
+\NormalTok{n\_miss\_et\_in\_ip }\OtherTok{\textless{}{-}} \FunctionTok{sum}\NormalTok{(}\SpecialCharTok{!}\NormalTok{(ids\_et}\SpecialCharTok{$}\NormalTok{uniqueID }\SpecialCharTok{\%in\%}\NormalTok{ ids\_ip}\SpecialCharTok{$}\NormalTok{uniqueID))}
+\NormalTok{n\_miss\_ip\_in\_et }\OtherTok{\textless{}{-}} \FunctionTok{sum}\NormalTok{(}\SpecialCharTok{!}\NormalTok{(ids\_ip}\SpecialCharTok{$}\NormalTok{uniqueID }\SpecialCharTok{\%in\%}\NormalTok{ ids\_et}\SpecialCharTok{$}\NormalTok{uniqueID))}
+
+\FunctionTok{tibble}\NormalTok{(}
+  \AttributeTok{missing\_ET\_in\_Interpdata =}\NormalTok{ n\_miss\_et\_in\_ip,}
+  \AttributeTok{missing\_Interpdata\_in\_ET =}\NormalTok{ n\_miss\_ip\_in\_et}
+\NormalTok{) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{kable}\NormalTok{() }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{kable\_styling}\NormalTok{(}\AttributeTok{full\_width =} \ConstantTok{FALSE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[t]{rr}
+\toprule
+missing\_ET\_in\_Interpdata & missing\_Interpdata\_in\_ET\\
+\midrule
+0 & 0\\
+\bottomrule
+\end{longtable}
+
+\section{9. Plots diagnósticos
+rápidos}\label{plots-diagnuxf3sticos-ruxe1pidos}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# 3 trials aleatorios: trayectoria 2D en la balda}
+\NormalTok{sample\_ids }\OtherTok{\textless{}{-}} \FunctionTok{sample}\NormalTok{(}\FunctionTok{unique}\NormalTok{(ETdata\_clean}\SpecialCharTok{$}\NormalTok{uniqueID), }\AttributeTok{size =} \FunctionTok{min}\NormalTok{(}\DecValTok{3}\NormalTok{, }\FunctionTok{length}\NormalTok{(}\FunctionTok{unique}\NormalTok{(ETdata\_clean}\SpecialCharTok{$}\NormalTok{uniqueID))))}
+\NormalTok{ETdata\_clean }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{filter}\NormalTok{(uniqueID }\SpecialCharTok{\%in\%}\NormalTok{ sample\_ids, invalidWindow }\SpecialCharTok{==} \DecValTok{0}\NormalTok{) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(planeIntersect\_x, planeIntersect\_y, }\AttributeTok{group =}\NormalTok{ uniqueID, }\AttributeTok{color =}\NormalTok{ uniqueID)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_path}\NormalTok{(}\AttributeTok{alpha =} \FloatTok{0.6}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{coord\_equal}\NormalTok{(}\AttributeTok{xlim =} \FunctionTok{c}\NormalTok{(}\SpecialCharTok{{-}}\NormalTok{SHELF\_BOUND, SHELF\_BOUND), }\AttributeTok{ylim =} \FunctionTok{c}\NormalTok{(}\SpecialCharTok{{-}}\NormalTok{SHELF\_BOUND, SHELF\_BOUND)) }\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}\AttributeTok{title =} \StringTok{"Trayectorias 2D (m) por trial (muestras válidas)"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\pandocbounded{\includegraphics[keepaspectratio]{01_sanity_check_files/figure-latex/unnamed-chunk-11-1.pdf}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Serie temporal corta de euc\_vel para esos trials}
+\NormalTok{ETdata\_clean }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{filter}\NormalTok{(uniqueID }\SpecialCharTok{\%in\%}\NormalTok{ sample\_ids, invalidWindow }\SpecialCharTok{==} \DecValTok{0}\NormalTok{) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{mutate}\NormalTok{(}\AttributeTok{t\_s =}\NormalTok{ t\_ms}\SpecialCharTok{/}\DecValTok{1000}\NormalTok{) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(t\_s, euc\_vel, }\AttributeTok{color =}\NormalTok{ uniqueID)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_line}\NormalTok{(}\AttributeTok{alpha =} \FloatTok{0.6}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}\AttributeTok{title =} \StringTok{"euc\_vel a lo largo del tiempo"}\NormalTok{, }\AttributeTok{x =} \StringTok{"t (s)"}\NormalTok{, }\AttributeTok{y =} \StringTok{"m/s"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\pandocbounded{\includegraphics[keepaspectratio]{01_sanity_check_files/figure-latex/unnamed-chunk-12-1.pdf}}
+\# 10. Resumen de flags y guardado de reporte
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{issues }\OtherTok{\textless{}{-}} \FunctionTok{list}\NormalTok{(}
+  \AttributeTok{pct\_non\_monotone\_trials   =} \FunctionTok{mean}\NormalTok{(}\SpecialCharTok{!}\NormalTok{mono\_tbl}\SpecialCharTok{$}\NormalTok{is\_monotone) }\SpecialCharTok{*} \DecValTok{100}\NormalTok{,}
+  \AttributeTok{pct\_t1\_in\_range           =} \FunctionTok{mean}\NormalTok{(anchors\_ok}\SpecialCharTok{$}\NormalTok{t1\_in\_range) }\SpecialCharTok{*} \DecValTok{100}\NormalTok{,}
+  \AttributeTok{pct\_tf\_in\_range           =} \FunctionTok{mean}\NormalTok{(anchors\_ok}\SpecialCharTok{$}\NormalTok{tf\_in\_range) }\SpecialCharTok{*} \DecValTok{100}\NormalTok{,}
+  \AttributeTok{pct\_bStart\_in\_range       =} \FunctionTok{mean}\NormalTok{(anchors\_ok}\SpecialCharTok{$}\NormalTok{bStart\_in\_range) }\SpecialCharTok{*} \DecValTok{100}\NormalTok{,}
+  \AttributeTok{pct\_bDetect\_in\_range      =} \FunctionTok{mean}\NormalTok{(anchors\_ok}\SpecialCharTok{$}\NormalTok{bDetect\_in\_range) }\SpecialCharTok{*} \DecValTok{100}\NormalTok{,}
+  \AttributeTok{pct\_detect\_consistent     =} \FunctionTok{mean}\NormalTok{(anchors\_ok}\SpecialCharTok{$}\NormalTok{detect\_consistent) }\SpecialCharTok{*} \DecValTok{100}\NormalTok{,}
+  \AttributeTok{pct\_invalidData\_global    =} \FunctionTok{mean}\NormalTok{(ETdata\_clean}\SpecialCharTok{$}\NormalTok{invalidData }\SpecialCharTok{==} \DecValTok{1}\NormalTok{, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{) }\SpecialCharTok{*} \DecValTok{100}\NormalTok{,}
+  \AttributeTok{pct\_invalidWindow\_global  =} \FunctionTok{mean}\NormalTok{(ETdata\_clean}\SpecialCharTok{$}\NormalTok{invalidWindow }\SpecialCharTok{==} \DecValTok{1}\NormalTok{, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{) }\SpecialCharTok{*} \DecValTok{100}\NormalTok{,}
+  \AttributeTok{px\_min =} \FunctionTok{min}\NormalTok{(ETdata\_clean}\SpecialCharTok{$}\NormalTok{planeIntersect\_x, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{),}
+  \AttributeTok{px\_max =} \FunctionTok{max}\NormalTok{(ETdata\_clean}\SpecialCharTok{$}\NormalTok{planeIntersect\_x, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{),}
+  \AttributeTok{py\_min =} \FunctionTok{min}\NormalTok{(ETdata\_clean}\SpecialCharTok{$}\NormalTok{planeIntersect\_y, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{),}
+  \AttributeTok{py\_max =} \FunctionTok{max}\NormalTok{(ETdata\_clean}\SpecialCharTok{$}\NormalTok{planeIntersect\_y, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{),}
+  \AttributeTok{interp\_all\_equal\_dt       =} \FunctionTok{mean}\NormalTok{(grid\_ok}\SpecialCharTok{$}\NormalTok{all\_equal\_dt) }\SpecialCharTok{*} \DecValTok{100}\NormalTok{,}
+  \AttributeTok{ids\_missing\_et\_in\_ip      =} \FunctionTok{sum}\NormalTok{(}\SpecialCharTok{!}\NormalTok{(ids\_et}\SpecialCharTok{$}\NormalTok{uniqueID }\SpecialCharTok{\%in\%}\NormalTok{ ids\_ip}\SpecialCharTok{$}\NormalTok{uniqueID)),}
+  \AttributeTok{ids\_missing\_ip\_in\_et      =} \FunctionTok{sum}\NormalTok{(}\SpecialCharTok{!}\NormalTok{(ids\_ip}\SpecialCharTok{$}\NormalTok{uniqueID }\SpecialCharTok{\%in\%}\NormalTok{ ids\_et}\SpecialCharTok{$}\NormalTok{uniqueID))}
+\NormalTok{)}
+
+\NormalTok{issues\_chr }\OtherTok{\textless{}{-}} \FunctionTok{capture.output}\NormalTok{(}\FunctionTok{str}\NormalTok{(issues))}
+\FunctionTok{writeLines}\NormalTok{(issues\_chr, }\AttributeTok{con =} \FunctionTok{file.path}\NormalTok{(RESULTS\_DIR, }\StringTok{"sanity\_summary.txt"}\NormalTok{))}
+
+\FunctionTok{cat}\NormalTok{(}\StringTok{"**Resumen escrito en** \textasciigrave{}results/sanity\_summary.txt\textasciigrave{}"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## **Resumen escrito en** `results/sanity_summary.txt`
+\end{verbatim}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{10}
+\tightlist
+\item
+  Notas de interpretación rápida • t\_ms monotónico: debe ser monotónico
+  dentro de cada uniqueID. Si aparece algún caso no monotónico, revisar
+  glitches previos. • dt\_ms \textasciitilde{} 8.33 ms: la mayoría de dt
+  deberían concentrarse en ese valor; colas largas indican pérdidas o
+  pausas. • Anclas/beeps: tiempos relativos deben caer dentro del rango
+  de cada trial; beepDetectionTrial debe ser consistente con
+  beepDetectTime\_ms (NA vs.~no NA). • Proyección: la mayoría de puntos
+  dentro de ±SHELF\_BOUND; NA altos o \% fuera de rango suele indicar
+  fallo de proyección o tracking. • Invalid/invalidWindow: el padding
+  con PAD\_BLINK\_N hace crecer invalidWindow respecto a invalidData.
+  Útil para filtrar parpadeos y oclusiones. • Velocidades: inspeccionar
+  cuantiles altos (q99--q999) para detectar picos no fisiológicos
+  (artefactos). • Interpolación: en Interpdata, dt\_ms debe ser
+  exactamente DT\_MS en \textasciitilde100\% de trials. • Consistencia
+  de IDs: ambos datasets deben tener el mismo conjunto de uniqueID.
+\end{enumerate}
+
+\end{document}

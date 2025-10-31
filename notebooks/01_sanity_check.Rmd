@@ -3,12 +3,13 @@ title: "Sanity Check — CFT VR Eye-tracking"
 author: "David Marcos Cuesta"
 date: "`r format(Sys.time(), '%Y-%m-%d %H:%M')`"
 output:
+  pdf_document:
+    latex_engine: xelatex
+    toc: true #table of content
   html_document:
     toc: true
     toc_depth: 3
     number_sections: true
-  pdf_document:
-    toc: true
 params:
   data_dir: "data/processed"   
 ---
@@ -40,7 +41,7 @@ SHELF_BOUND <- 1.5
 PAD_BLINK_N <- 30
 ```
 
-# 0 Loading data and Environment 
+# Loading data and Environment 
 ```{r load-data}
 # Intenta cargar los RData; si no existen, usa los CSV
 et_rdata <- file.path(DATA_PROCESSED, "ETdata_clean.Rdata")
@@ -70,7 +71,7 @@ ETdata_clean <- ETdata_clean %>% mutate(uniqueID = as.character(uniqueID))
 Interpdata   <- Interpdata   %>% mutate(uniqueID = as.character(uniqueID))
 ```
 
-# 1 Existencia, dimensiones y columnas clave
+# Existencia, dimensiones y columnas clave
 ```{r}
 et_dim <- dim(ETdata_clean)
 ip_dim <- dim(Interpdata)
@@ -92,7 +93,7 @@ tibble(
   kable() |>
   kable_styling(full_width = FALSE)
 ```
-# 2 Estructura temporal (monotonía y dt)
+# Estructura temporal (monotonía y dt)
 ```{r}
 # Monotonía de t_ms por trial
 mono_tbl <- ETdata_clean |>
@@ -127,7 +128,7 @@ ETdata_clean |>
        x = "dt_ms", y = "count",
        subtitle = glue("Línea discontinua: DT_MS esperado = {round(DT_MS,3)}"))
 ```
-# 3 Anclas y beeps
+# Anclas y beeps
 ```{r}
 # Chequeos básicos de coherencia temporal de anclas
 anchors_ok <- ETdata_clean |>
@@ -164,7 +165,7 @@ summ_anchors |>
   kable_styling(full_width = FALSE)
 ```
 
-# 4. Proyección al plano: rangos y NA
+# Proyección al plano: rangos y NA
 ```{r}
 proj_stats <- ETdata_clean |>
   summarize(
@@ -187,7 +188,7 @@ proj_stats |>
   kable_styling(full_width = FALSE)
 ```
 
-# 5. Invalid y invalidWindow (parpadeos + padding)
+# Invalid y invalidWindow (parpadeos + padding)
 ```{r}
 inv_stats <- ETdata_clean |>
   summarize(
@@ -212,7 +213,7 @@ inv_by_trial |>
   kable_styling(full_width = FALSE)
 ```
 
-# 6. Velocidades: distribución y outliers
+# Velocidades: distribución y outliers
 ```{r}
 vel_stats <- ETdata_clean |>
   summarize(
@@ -249,7 +250,7 @@ p2 <- ETdata_clean |>
 p1
 p2
 ```
-# 7. Interpolación a 120 Hz (regularidad del grid)
+# Interpolación a 120 Hz (regularidad del grid)
 ```{r}
 grid_ok <- Interpdata |>
   group_by(uniqueID) |>
@@ -270,7 +271,7 @@ grid_ok |>
   kable_styling(full_width = FALSE)
 ```
 
-# 8. Consistencia de IDs entre ETdata_clean e Interpdata
+# Consistencia de IDs entre ETdata_clean e Interpdata
 
 ```{r}
 ids_et <- ETdata_clean |> distinct(uniqueID) |> arrange(uniqueID)
@@ -287,7 +288,7 @@ tibble(
   kable_styling(full_width = FALSE)
 ```
 
-# 9. Plots diagnósticos rápidos
+# Plots diagnósticos rápidos
 ```{r}
 # 3 trials aleatorios: trayectoria 2D en la balda
 sample_ids <- sample(unique(ETdata_clean$uniqueID), size = min(3, length(unique(ETdata_clean$uniqueID))))
@@ -308,7 +309,7 @@ ETdata_clean |>
   geom_line(alpha = 0.6) +
   labs(title = "euc_vel a lo largo del tiempo", x = "t (s)", y = "m/s")
 ```
-# 10. Resumen de flags y guardado de reporte
+# Resumen de flags y guardado de reporte
 ```{r}
 issues <- list(
   pct_non_monotone_trials   = mean(!mono_tbl$is_monotone) * 100,
