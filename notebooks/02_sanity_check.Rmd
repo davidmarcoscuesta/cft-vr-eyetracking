@@ -93,9 +93,9 @@ grid <- expand.grid(
 # Métrica a resumir por ventana
 signal_vars <- c("euc_vel", "ang_vel")  # puedes añadir otras (DFA_alpha si ya la calculas)
 agg_funs <- list(
-  mean = ~mean(.x, na.rm=TRUE),
-  sd   = ~sd(.x, na.rm=TRUE),
-  rms  = ~sqrt(mean(.x^2, na.rm=TRUE))
+  mean = function(x) mean(x, na.rm = TRUE),
+  sd   = function(x) sd(x, na.rm = TRUE),
+  rms  = function(x) sqrt(mean(x^2, na.rm = TRUE))
 )
 
 # ---------- Helpers ----------
@@ -257,6 +257,15 @@ evaluate_combo <- function(win_ms, step_ms, range_ms, k){
 }
 ```
 ```{r}
+results <- pmap_dfr(
+  as.list(as.data.frame(grid)),
+  ~ evaluate_combo(win_ms = ..1, step_ms = ..2, range_ms = ..3, k = ..4)
+)
 
+# Guardamos resultados brutos por si queremos inspeccionar luego
+dir.create("results", showWarnings = FALSE, recursive = TRUE)
+readr::write_csv(results, "results/window_param_sweep.csv")
+
+results %>% arrange(desc(coverage), desc(euc_d)) %>% head(10)
 ```
 
