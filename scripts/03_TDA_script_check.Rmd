@@ -1,0 +1,19 @@
+---
+title: "TDA_script_check"
+author: "David Cuesta"
+date: "2025-11-20"
+output: html_document
+---
+
+```{r}
+getwd()
+list.files("data")
+```
+```{r}
+load("data/Interpdata.Rdata")
+```
+
+```{r}
+head(Interpdata)
+```
+
